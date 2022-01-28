@@ -1,0 +1,19 @@
+# Dont upload configuration
+trades.txt
+tickers.txt
+keys.py
+
+#Nor optimization parameters
+model_parameters/
+scaler_parameters/
+
+__*__
+
+# Dont upload json files
+*.json
+
+# Dont upload h5 files
+*.h5
+
+# Virtual environment
+.venv

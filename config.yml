@@ -1,0 +1,40 @@
+# These options apply to how the script will operate.
+script_options:
+  LOG_TRADES: True
+  LOG_FILE: 'trades.txt'
+
+# Forecasting periods
+forecast_options:
+  TO_FORECAST: 3
+
+# Data extraction parameters for modeling
+model_options:
+  NO_DAYS: 1000
+
+# These parameters apply for the modern machine learning models
+ml_options:
+  LOOK_BACK: 1
+  TRAIN_SIZE: 0.67
+  NEURONS: 4
+  DROPOUT: 0.15
+  BATCH_SIZE: 1
+  OUTPUT_DIM: 1
+  EPOCH: 100
+  N_FEATURES: 1
+  HIDDEN_UNITS: 2
+  TIME_STEPS: 1
+  DENSE_UNITS: 1
+  FILTERS: 16
+  KERNEL_SIZE: 1
+  POOL_SIZE: 1
+  VERBOSE: 2
+
+
+# These options apply to the trading methods the script executes
+trading_options:
+  # select your base currency to use for trading (trade for example USDT pairs)
+  PAIR_WITH: USDT
+  # trading timeframe
+  TIMEFRAME: 1d
+  # Name of custom tickers list
+  TICKERS_LIST: 'tickers.txt'
