@@ -29,7 +29,6 @@ ml_options:
   POOL_SIZE: 1
   VERBOSE: 2
 
-
 # These options apply to the trading methods the script executes
 trading_options:
   # select your base currency to use for trading (trade for example USDT pairs)

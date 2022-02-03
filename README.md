@@ -17,11 +17,11 @@ Statistical tests and plots if wanted.
       1. Grid Search Framework
 2. Comparing/Scoring(Cross-Validation)/Statistical tests for different models and select best fit model (maybe stats module not needed)
 3. Model Forecast (Separate Fit from forecast.)
-4. Model Plot
+4. Plots for: stats, finance, machinelearning, modelforecast and portfolio (ok but move from portfolio to plots)
 5. Multi-outputs (OHLC) for forecasting
 6. BOT:
    1. Trading Module based on model limits
-   2. Portfolio Managing and MTP optimization
+   2. Portfolio Managing and MTP optimization (ok)
    3. Bot loop
 
 #Further investigation

@@ -66,18 +66,19 @@ class DataProcessing:
             dataframe = dataset['close']
             data = dataframe.values
             if model == 'GARCH' or model == 'ARCH':
-                #print('setting double')
+                print('setting double')
                 data = data.astype('double')
             elif model == 'LR' or model == 'KNN' or model == 'CART' or model == 'SVC' or model == 'NB' or model == 'PN'\
                     or model == 'SGD' or model == 'RF':
-                #print('setting int')
+                print('setting int')
                 lab_enc = preprocessing.LabelEncoder()
                 data = lab_enc.fit_transform(data)
             else:
-                #print('setting float')
+                print('setting float')
                 data = data.astype('float32')
-            #print('reshaping')
-            data = numpy.reshape(data, (NO_DAYS, 1))
+            print('reshaping')
+            data = numpy.reshape(data, (len(data), 1))
+            # data = numpy.reshape(data, (NO_DAYS, 1))
             # data = numpy.reshape(data, len(data))
         except Exception as e:
             print("An exception occurred - {}".format(e))

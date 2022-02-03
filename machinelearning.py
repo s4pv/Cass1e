@@ -173,7 +173,7 @@ class MachineLearning:
             return False
         return True
 
-    def MLP(dataset, coin):
+    def MLP(dataset, coin, n_feat, epoch, batch_size, verbose):
         try:
             trainX, trainY, testX, testY, ds = DataProcessing.Preprocess_Data(dataset, 'MLP', coin)
             # Create and fit the Multi Layer Perceptron.
@@ -258,6 +258,7 @@ class MachineLearning:
             lstm.compile(loss='mean_squared_error', optimizer='adam')
             # Memory between batches -> epoch can be added in a for
             lstm.fit(trainX, trainY, epochs=EPOCH, batch_size=BATCH_SIZE, verbose=VERBOSE, shuffle=False)
+            print(lstm.summary())
             #lstm.reset_states()
             #print('lstm')
             #Yhat = lstm.predict(testX)

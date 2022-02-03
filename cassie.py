@@ -17,6 +17,8 @@ from dataprocessing import DataProcessing
 from machinelearning import MachineLearning
 from finance import Finance
 from stats import Stats
+from modelfit import ModelFit
+import pandas as pd
 
 warnings.filterwarnings("ignore")
 
@@ -69,21 +71,42 @@ class Cassie:
 
 def main():
     cassie = Cassie("Cass1e")
+    data_returns = pd.DataFrame()
     for coin in cassie.client.get_all_tickers():
         for crypto in cassie.tickers:
             if crypto + cassie.PAIR_WITH == coin['symbol']:
                 # Forcing closing and deleting orders at the end of the new york season. 18 hours localtime.
+                dataset = cassie.client.get_klines(symbol=coin['symbol'], interval=cassie.TIMEFRAME,
+                                                   limit=cassie.NO_DAYS)
+                dataset_ohlcv = DataProcessing.OHLCV_DataFrame(dataset)
+                returns = Portfolio.Return(dataset_ohlcv, coin)
+                data_returns[coin['symbol']] = returns[coin['symbol']]
+
                 if coin['symbol'] == 'BTCUSDT':
+
                     #if cassie.local_aware.day == 'MONDAY': #??
                         print('Today is monday. Heaviest day of the week...')
                         print('We have to fit models again, and choose the better to model BTCUSDT.')
                         print('Extracting pricing data from the server...')
-                        dataset = cassie.client.get_klines(symbol=coin['symbol'], interval=cassie.TIMEFRAME,
-                                                           limit=cassie.NO_DAYS)
-                        dataframe = DataProcessing.OHLCV_DataFrame(dataset)
-                        print('Running, fitting and comparing all the models. This may take a while.')
+                        #dataset = cassie.client.get_klines(symbol=coin['symbol'], interval=cassie.TIMEFRAME,
+                        #                                   limit=cassie.NO_DAYS)
+                        #dataframe = DataProcessing.OHLCV_DataFrame(dataset)
+
+                        #print(dataframe)
+
+                        print('Running, fitting and comparing all the models. Saving the best data.')
+                        #Stats.Shapiro_Wilk(dataframe)
+                        #names, results = ModelFit.Calculate(dataframe, coin)
+                        #MachineLearning.LSTM(dataframe, coin)
+                        print('This may take a while...')
                         print('Model chosen!!. So now, we have to fit the data for all the coins in the ticker list.')
-                print('Loading the model on the coin: ' + coin['symbol'])
+                        print('Loading the model on the coin: ' + coin['symbol'])
+                        #dataframe[coin['symbol']] = Portfolio.Data(dataframe, coin)
+
+                #print(dataset)
+                print('Making a minimum variance portfolio with the forecasted returns.')
+                print('So we have to allocate the following ammounts per coin. Cass1e will be trading beetween those ammounts.')
+                #print(dataframe)
                 print('Compiling the model')
                 print('Making forecasts!')
                 print('Plotting... ')
@@ -119,7 +142,16 @@ def main():
                                                        limit=cassie.NO_DAYS)
                     dataframe = DataProcessing.OHLCV_DataFrame(dataset)
                     upper_limit, lower_limit = AsianRange.update(coin['symbol'], dataframe)
-
+    print(data_returns)
+    #port_returns, port_vols = Portfolio.Simulations(data_returns)
+    Portfolio.Optimize_Sharpe(data_returns)
+    #print(portfolio_alloc)
+    #port_return, port_vols, sharpe = Portfolio.Stats(weights, data_returns)
+    #optimal_sharpe_weights = Portfolio.Optimize_Sharpe(data_returns)
+    #optimal_variance_weights = Portfolio.Optimize_Return(data_returns)
+    #minimal_volatilities, target_returns = Portfolio.Efficient_Frontier(data_returns, port_returns)
+    #Portfolio.Plot(port_returns, port_vols, optimal_sharpe_weights, optimal_variance_weights,
+    #                             minimal_volatilities, target_returns)
 
 if __name__ == "__main__":
     main()

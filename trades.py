@@ -3,7 +3,7 @@ import keys
 
 
 class Trades:
-    def longAccounting(coin):
+    def Long(coin):
         try:
             client = Client(keys.Pkey, keys.Skey)
             orders = client.get_all_orders(symbol=coin['symbol'])
@@ -20,7 +20,7 @@ class Trades:
         return buy_limit_count
 
 
-    def shortAccounting(coin):
+    def Short(coin):
         try:
             client = Client(keys.Pkey, keys.Skey)
             orders = client.get_all_orders(symbol=coin['symbol'])
