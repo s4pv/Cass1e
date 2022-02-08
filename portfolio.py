@@ -6,7 +6,7 @@ import warnings
 from dataprocessing import DataProcessing
 import matplotlib.pyplot as plt
 import time
-import scipy.optimize as Optimize
+import scipy.optimize as optimize
 import scipy.interpolate as sci
 
 
@@ -80,52 +80,63 @@ class Portfolio:
             return False
         return port_returns, port_vols
 
-    def Stats(data_returns, weights):
+    def port_stats(weights, data_returns):
         try:
+            # Convert to dataframe in case list was passed instead.
+            df = pd.DataFrame(data_returns)
             # Convert to array in case list was passed instead.
             weights = np.array(weights)
             # Anualize: 252
-            port_return = np.sum(data_returns.mean() * weights) * 252
-            port_vol = np.sqrt(np.dot(weights.T, np.dot(data_returns.cov() * 252, weights)))
+            port_return = np.sum(df.mean() * weights) * 252
+            port_vol = np.sqrt(np.dot(weights.T, np.dot(df.cov() * 252, weights)))
             sharpe = port_return / port_vol
         except Exception as e:
             print("An exception ocurred - {}".format(e))
             return False
         return {'return': port_return, 'volatility': port_vol, 'sharpe': sharpe}
 
-    def minimize_sharpe(data_returns, weights):
-        return -Portfolio.Stats(data_returns, weights)['sharpe']
+    def minimize_sharpe(weights, data_returns):
+        try:
+            ms = -Portfolio.port_stats(weights, data_returns)['sharpe']
+        except Exception as e:
+            print("An exception ocurred - {}".format(e))
+            return False
+        return ms
 
-    def minimize_volatility(data_returns, weights):
-        return Portfolio.Stats(data_returns, weights)['volatility']
+    def minimize_volatility(weights, data_returns):
+        try:
+            mv = Portfolio.port_stats(weights, data_returns)['volatility']
+        except Exception as e:
+            print("An exception ocurred - {}".format(e))
+            return False
+        return mv
 
-    def minimize_return(data_returns, weights):
-        return -Portfolio.Stats(data_returns, weights)['return']
+    def minimize_return(weights, data_returns):
+        try:
+            mr = -Portfolio.port_stats(weights, data_returns)['return']
+        except Exception as e:
+            print("An exception ocurred - {}".format(e))
+            return False
+        return mr
 
     def Optimize_Sharpe(data_returns):
         try:
             constraints = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
             num_assets = len(data_returns.columns)
             assets = data_returns.columns
-            weights = np.random.dirichlet(np.ones(num_assets), size=1)
-            weights = weights[0]
             bounds = tuple((0, 1) for x in range(num_assets))
             initializer = num_assets * [1. / num_assets, ]
-            print(initializer)
-            print(bounds)
-            optimal_sharpe = Optimize.minimize(Portfolio.minimize_sharpe(data_returns, weights),
-                                               initializer,
+            optimal_sharpe = optimize.minimize(fun=Portfolio.minimize_sharpe,
+                                               x0=initializer,
+                                               args=data_returns,
                                                method='SLSQP',
                                                bounds=bounds,
                                                constraints=constraints)
-            print(optimal_sharpe)
             optimal_sharpe_weights = optimal_sharpe['x'].round(4)
-            list(zip(assets, list(optimal_sharpe_weights)))
-            optimal_stats = Portfolio.Stats(data_returns, optimal_sharpe_weights)
+            optimal_stats = Portfolio.port_stats(optimal_sharpe_weights, data_returns)
             print('Optimal Portfolio Return: ', round(optimal_stats['return'] * 100, 4))
             print('Optimal Portfolio Volatility: ', round(optimal_stats['volatility'] * 100, 4))
             print('Optimal Portfolio Sharpe Ratio: ', round(optimal_stats['sharpe'], 4))
-
         except Exception as e:
             print("An exception ocurred - {}".format(e))
             return False
@@ -136,20 +147,16 @@ class Portfolio:
             constraints = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
             num_assets = len(data_returns.columns)
             assets = data_returns.columns
-            weights = np.random.dirichlet(np.ones(num_assets), size=1)
-            weights = weights[0]
             bounds = tuple((0, 1) for x in range(num_assets))
             initializer = num_assets * [1. / num_assets, ]
-            optimal_variance = Optimize.minimize(Portfolio.minimize_volatility(data_returns, weights),
-                                                 initializer,
+            optimal_variance = optimize.minimize(Portfolio.minimize_volatility,
+                                                 x0=initializer,
+                                                 args=data_returns,
                                                  method='SLSQP',
                                                  bounds=bounds,
                                                  constraints=constraints)
             optimal_variance_weights=optimal_variance['x'].round(4)
-            list(zip(assets, list(optimal_variance_weights)))
-            optimal_stats = Portfolio.Stats(data_returns, optimal_variance_weights)
-
-            print(optimal_stats)
+            optimal_stats = Portfolio.port_stats(optimal_variance_weights, data_returns)
             print('Optimal Portfolio Return: ', round(optimal_stats['return'] * 100, 4))
             print('Optimal Portfolio Volatility: ', round(optimal_stats['volatility'] * 100, 4))
             print('Optimal Portfolio Sharpe Ratio: ', round(optimal_stats['sharpe'], 4))
@@ -159,11 +166,8 @@ class Portfolio:
             return False
         return list(zip(assets, list(optimal_variance_weights)))
 
-    def Efficient_Frontier(data_returns, port_returns):
+    def Efficient_Frontier(data_returns):
         try:
-            # Make an array of 50 returns between the minimum return and maximum return
-            # discovered earlier.
-            target_returns = np.linspace(port_returns.min(), port_returns.max(), 50)
             num_assets = len(data_returns.columns)
             weights = np.random.dirichlet(np.ones(num_assets), size=1)
             weights = weights[0]
@@ -171,30 +175,37 @@ class Portfolio:
             minimal_volatilities = []
             bounds = tuple((0, 1) for x in weights)
             initializer = num_assets * [1. / num_assets, ]
-
+            # Make an array of 50 returns between the minimum return and maximum return
+            # discovered earlier.
+            port_returns, port_vols = Portfolio.Simulations(data_returns)
+            target_returns = np.linspace(port_returns.min(), port_returns.max(), 50)
             for target_return in target_returns:
-                constraints = ({'type': 'eq', 'fun': lambda x: Portfolio.Stats(x, weights)['return'] - target_return},
+                constraints = ({'type': 'eq', 'fun': lambda x: Portfolio.port_stats(x, data_returns)['return'] - target_return},
                                {'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
-
-                optimal = Optimize.minimize(Portfolio.minimize_volatility(data_returns, weights),
-                                            initializer,
+                optimal = optimize.minimize(fun=Portfolio.minimize_volatility,
+                                            x0=initializer,
+                                            args=data_returns,
                                             method='SLSQP',
                                             bounds=bounds,
                                             constraints=constraints)
-
                 minimal_volatilities.append(optimal['fun'])
-
             minimal_volatilities = np.array(minimal_volatilities)
-            target_returns = np.array(target_returns) #ver si es con S o no final
-
+            target_returns = np.array(target_returns)
         except Exception as e:
             print("An exception ocurred - {}".format(e))
             return False
         return minimal_volatilities, target_returns
 
-    def Plot(data_returns, port_returns, port_vols, optimal_sharpe_weights, optimal_variance_weights,
-             minimal_volatilities, target_returns):
+    def Plot(data_returns):
         try:
+            port_returns, port_vols = Portfolio.Simulations(data_returns)
+            minimal_volatilities, target_returns = Portfolio.Efficient_Frontier(data_returns)
+            print(minimal_volatilities)
+            print(target_returns)
+            sharpe_results = Portfolio.Optimize_Sharpe(data_returns)
+            assets1, optimal_sharpe_weights = list(zip(*sharpe_results))
+            var_results = Portfolio. Optimize_Return(data_returns)
+            assets2, optimal_variance_weights = list(zip(*var_results))
             # initialize figure size
             plt.figure(figsize=(18, 10))
 
@@ -208,13 +219,13 @@ class Portfolio:
                         c=(target_returns / minimal_volatilities),
                         marker='x')
 
-            plt.plot(Portfolio.Stats(data_returns, optimal_sharpe_weights)['volatility'],
-                     Portfolio.Stats(data_returns, optimal_sharpe_weights)['return'],
+            plt.plot(Portfolio.port_stats(optimal_sharpe_weights, data_returns)['volatility'],
+                     Portfolio.port_stats(optimal_sharpe_weights, data_returns)['return'],
                      'r*',
                      markersize=25.0)
 
-            plt.plot(Portfolio.Stats(data_returns, optimal_variance_weights)['volatility'],
-                     Portfolio.Stats(data_returns, optimal_variance_weights)['return'],
+            plt.plot(Portfolio.port_stats(optimal_variance_weights, data_returns)['volatility'],
+                     Portfolio.port_stats(optimal_variance_weights, data_returns)['return'],
                      'y*',
                      markersize=25.0)
 
@@ -228,8 +239,10 @@ class Portfolio:
             return False
         return True
 
-    def Capital_Market_Line(minimal_volatilities, target_returns, port_vols, port_returns):
+    def Capital_Market_Line(data_returns):
         try:
+            minimal_volatilities, target_returns = Portfolio.Efficient_Frontier(data_returns)
+            port_returns, port_vols = Portfolio.Simulations(data_returns)
             min_index = np.argmin(minimal_volatilities)
             ex_returns = target_returns[min_index:]
             ex_volatilities = minimal_volatilities[min_index:]
@@ -239,7 +252,7 @@ class Portfolio:
             m = port_vols.max() / 2
             li = port_returns.max() / 2
 
-            optimal = Optimize.fsolve(Portfolio.eqs, [rfr, m, li])
+            optimal = optimize.fsolve(Portfolio.eqs, [rfr, m, li])
             print(optimal)
         except Exception as e:
             print("An exception ocurred - {}".format(e))

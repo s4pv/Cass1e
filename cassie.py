@@ -22,6 +22,7 @@ import pandas as pd
 
 warnings.filterwarnings("ignore")
 
+
 class Cassie:
 
     print('----------------------------------')
@@ -144,7 +145,8 @@ def main():
                     upper_limit, lower_limit = AsianRange.update(coin['symbol'], dataframe)
     print(data_returns)
     #port_returns, port_vols = Portfolio.Simulations(data_returns)
-    Portfolio.Optimize_Sharpe(data_returns)
+    #Portfolio.Efficient_Frontier(data_returns)
+    Portfolio.Plot(data_returns)
     #print(portfolio_alloc)
     #port_return, port_vols, sharpe = Portfolio.Stats(weights, data_returns)
     #optimal_sharpe_weights = Portfolio.Optimize_Sharpe(data_returns)
@@ -152,6 +154,7 @@ def main():
     #minimal_volatilities, target_returns = Portfolio.Efficient_Frontier(data_returns, port_returns)
     #Portfolio.Plot(port_returns, port_vols, optimal_sharpe_weights, optimal_variance_weights,
     #                             minimal_volatilities, target_returns)
+
 
 if __name__ == "__main__":
     main()
