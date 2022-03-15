@@ -3,7 +3,7 @@ from keras.models import model_from_json
 
 class ModelParameters:
 
-    def save(model, coin, modelname):
+    def Save_Model(model, coin, modelname):
         try:
 
             # Save the model to disk with YAML
@@ -14,15 +14,16 @@ class ModelParameters:
             with open(filename, "w") as json_file:
                 json_file.write(model_json)
             # Serialize weights to HDF5
-            model.save_weights('C:/Users/pablo/PycharmProjects/Cass1e/model_parameters',
+            filename2 = os.path.join('C:/Users/pablo/PycharmProjects/Cass1e/model_parameters',
                                str(coin['symbol']) + '_model_' + str(modelname) + '.h5')
+            model.save_weights(filename2)
             print("Saved model to disk")
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
         return True
 
-    def load(modelname, coin):
+    def Load_Model(modelname, coin):
         try:
             # Load the model and scaler from disk
             filename = os.path.join('C:/Users/pablo/PycharmProjects/Cass1e/model_parameters',
@@ -32,10 +33,11 @@ class ModelParameters:
             json_file.close()
             model = model_from_json(loaded_model_json)
             # Load weights into new model
-            model.load_weights(os.path.join('C:/Users/pablo/PycharmProjects/Cass1e/',
-                               str(coin['symbol']) + '_model_' + str(modelname) + '.h5'))
+            filename2 = os.path.join('C:/Users/pablo/PycharmProjects/Cass1e/model_parameters',
+                               str(coin['symbol']) + '_model_' + str(modelname) + '.h5')
+            model.load_weights(filename2)
             print("Loaded model from disk")
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
-        return True
+        return model

@@ -15,6 +15,7 @@ from asianrange import AsianRange
 from helper import Helper
 from preprocessing import Preprocessing
 from machinelearning import MachineLearning
+from modelforecast import ModelForecast
 from finance import Finance
 from stats import Stats
 from modelfit import ModelFit
@@ -98,7 +99,9 @@ def main():
                         print('Running, fitting and comparing all the models. Saving the best data.')
                         #Stats.Shapiro_Wilk(dataset_ohlcv)
                         #names, results = ModelFit.Calculate(dataframe, coin)
-                        MachineLearning.LSTM(dataset_ohlcv, coin)
+                        #MachineLearning.LSTM(dataset_ohlcv, coin)
+                        #ModelForecast.Predict_LSTM(dataset_ohlcv, coin)
+                        Finance.GARCH(dataset_ohlcv, coin)
                         print('This may take a while...')
                         print('Model chosen!!. So now, we have to fit the data for all the coins in the ticker list.')
                         print('Loading the model on the coin: ' + coin['symbol'])

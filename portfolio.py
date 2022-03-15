@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import time
 import scipy.optimize as optimize
 import scipy.interpolate as sci
+import os
 
 
 warnings.filterwarnings("ignore")
@@ -73,7 +74,10 @@ class Portfolio:
             plt.xlabel('Portfolio Volatility')
             plt.ylabel('Portfolio Return')
             plt.colorbar(label='Sharpe ratio (not adjusted for short rate)')
-            plt.show()
+            #plt.show()
+            filename = os.path.join('C:/Users/pablo/PycharmProjects/Cass1e/model_plots/simulations.png')
+            plt.savefig(filename)
+            plt.close()
             print('Elapsed Time: %.2f seconds' % (time.time() - start))
         except Exception as e:
             print("An exception ocurred - {}".format(e))
@@ -160,7 +164,6 @@ class Portfolio:
             print('Optimal Portfolio Return: ', round(optimal_stats['return'] * 100, 4))
             print('Optimal Portfolio Volatility: ', round(optimal_stats['volatility'] * 100, 4))
             print('Optimal Portfolio Sharpe Ratio: ', round(optimal_stats['sharpe'], 4))
-
         except Exception as e:
             print("An exception ocurred - {}".format(e))
             return False
@@ -232,8 +235,10 @@ class Portfolio:
             plt.xlabel('Portfolio Volatility')
             plt.ylabel('Portfolio Return')
             plt.colorbar(label='Sharpe ratio (not adjusted for short rate)')
-
-            plt.show()
+            #plt.show()
+            filename = os.path.join('C:/Users/pablo/PycharmProjects/Cass1e/model_plots/Efficient_Frontier.png')
+            plt.savefig(filename)
+            plt.close()
         except Exception as e:
             print("An exception ocurred - {}".format(e))
             return False

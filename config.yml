@@ -5,7 +5,7 @@ script_options:
 
 # Forecasting periods
 forecast_options:
-  TO_FORECAST: 3
+  TO_FORECAST: 50
 
 # Data extraction parameters for modeling
 model_options:

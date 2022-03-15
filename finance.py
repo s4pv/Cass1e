@@ -1,7 +1,10 @@
+import math
 import warnings
-
+from sklearn.metrics import mean_squared_error
 from helper import Helper
-from sklearn import preprocessing
+from modelplot import ModelPlot
+from modelparameters import ModelParameters
+
 from statsmodels.tsa.ar_model import AutoReg
 from statsmodels.tsa.arima.model import ARIMA
 from statsmodels.tsa.statespace.sarimax import SARIMAX
@@ -10,10 +13,11 @@ from statsmodels.tsa.statespace.varmax import VARMAX
 from statsmodels.tsa.holtwinters import SimpleExpSmoothing
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from arch import arch_model
+
 import pandas as pd
 import matplotlib.pyplot as plt
 from preprocessing import Preprocessing
-from scalerparameters import ScalerParameters
+import numpy
 
 warnings.filterwarnings("ignore")
 
@@ -30,7 +34,13 @@ class Finance:
 
     def AR(dataset, lag, coin):
         try:
-            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'AR', coin)
+            ds = Preprocessing.Reshape_Float(dataset)
+            ds = Preprocessing.Minmax_Scaler(ds, 'AR', coin)
+            print(len(ds))
+            train, test = Preprocessing.Dataset_Split(ds)
+            trainX, trainY, testX, testY = Preprocessing.Reshape_Data(train, test)
+            # fix random seed for reproducibility
+            numpy.random.seed(7)
             print('Starting to fit model: AR')
             # fit model
             model = AutoReg(trainX, lags=lag)
@@ -48,7 +58,11 @@ class Finance:
 
     def ARIMA(dataset, order1, order2, order3, coin):
         try:
-            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'ARIMA', coin)
+            ds = Preprocessing.Reshape_Float(dataset)
+            ds = Preprocessing.Minmax_Scaler(ds, 'ARIMA', coin)
+            print(len(ds))
+            train, test = Preprocessing.Dataset_Split(ds)
+            trainX, trainY, testX, testY = Preprocessing.Reshape_Data(train, test)
             print('Starting to fit model: ARIMA')
             # fit model
             model = ARIMA(trainX, order=(order1, order2, order3))
@@ -66,7 +80,11 @@ class Finance:
 
     def SARIMA(dataset, order1, order2, order3, sorder1, sorder2, sorder3, sorder4, predict, coin):
         try:
-            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'SARIMA', coin)
+            ds = Preprocessing.Reshape_Float(dataset)
+            ds = Preprocessing.Minmax_Scaler(ds, 'SARIMA', coin)
+            print(len(ds))
+            train, test = Preprocessing.Dataset_Split(ds)
+            trainX, trainY, testX, testY = Preprocessing.Reshape_Data(train, test)
             print('Starting to fit model: SARIMA')
             # fit model
             model = SARIMAX(trainX, order=(order1, order2, order3),
@@ -89,9 +107,18 @@ class Finance:
     def SARIMAX(dataset1, dataset2, dataset3, order1, order2, order3, sorder1, sorder2, sorder3, sorder4, predict,
                 coin):
         try:
-            trainX1, trainY1, testX1, testY1, ds1 = Preprocessing.Preprocess_Data(dataset1, 'SARIMAX', coin)
-            trainX2, trainY2, testX2, testY2, ds2 = Preprocessing.Preprocess_Data(dataset2, 'SARIMAX', coin)
-            trainX3, trainY3, testX3, testY3, ds3 = Preprocessing.Preprocess_Data(dataset3, 'SARIMAX', coin)
+            ds1 = Preprocessing.Reshape_Float(dataset1)
+            ds2 = Preprocessing.Reshape_Float(dataset2)
+            ds3 = Preprocessing.Reshape_Float(dataset3)
+            ds1 = Preprocessing.Minmax_Scaler(ds1, 'SARIMAX', coin)
+            ds2 = Preprocessing.Minmax_Scaler(ds2, 'SARIMAX', coin)
+            ds3 = Preprocessing.Minmax_Scaler(ds3, 'SARIMAX', coin)
+            train1, test1 = Preprocessing.Dataset_Split(ds1)
+            train2, test2 = Preprocessing.Dataset_Split(ds2)
+            train3, test3 = Preprocessing.Dataset_Split(ds3)
+            trainX1, trainY1, testX1, testY1 = Preprocessing.Reshape_Data(train1, test1)
+            trainX2, trainY2, testX2, testY2 = Preprocessing.Reshape_Data(train2, test2)
+            trainX3, trainY3, testX3, testY3 = Preprocessing.Reshape_Data(train3, test3)
             print('Starting to fit model: SARIMAX')
             # fit model
             model = SARIMAX(trainX1, trainX2, order=(order1, order2, order3), seasonal_order=(sorder1, sorder2,
@@ -111,8 +138,14 @@ class Finance:
 
     def VAR(dataset1, dataset2, coin):
         try:
-            trainX1, trainY1, testX1, testY1, ds1 = Preprocessing.Preprocess_Data(dataset1, 'VAR', coin)
-            trainX2, trainY2, testX2, testY2, ds2 = Preprocessing.Preprocess_Data(dataset2, 'VAR', coin)
+            ds1 = Preprocessing.Reshape_Float(dataset1)
+            ds2 = Preprocessing.Reshape_Float(dataset2)
+            ds1 = Preprocessing.Minmax_Scaler(ds1, 'VAR', coin)
+            ds2 = Preprocessing.Minmax_Scaler(ds2, 'VAR', coin)
+            train1, test1 = Preprocessing.Dataset_Split(ds1)
+            train2, test2 = Preprocessing.Dataset_Split(ds2)
+            trainX1, trainY1, testX1, testY1 = Preprocessing.Reshape_Data(train1, test1)
+            trainX2, trainY2, testX2, testY2 = Preprocessing.Reshape_Data(train2, test2)
             data = list()
             for i in range(len(trainX1)):
                 v1 = trainX1[i]
@@ -135,8 +168,14 @@ class Finance:
 
     def VARMA(dataset1, dataset2, order1, order2, coin):
         try:
-            trainX1, trainY1, testX1, testY1, ds1 = Preprocessing.Preprocess_Data(dataset1, 'VARMA', coin)
-            trainX2, trainY2, testX2, testY2, ds2 = Preprocessing.Preprocess_Data(dataset2, 'VARMA', coin)
+            ds1 = Preprocessing.Reshape_Float(dataset1)
+            ds2 = Preprocessing.Reshape_Float(dataset2)
+            ds1 = Preprocessing.Minmax_Scaler(ds1, 'VARMA', coin)
+            ds2 = Preprocessing.Minmax_Scaler(ds2, 'VARMA', coin)
+            train1, test1 = Preprocessing.Dataset_Split(ds1)
+            train2, test2 = Preprocessing.Dataset_Split(ds2)
+            trainX1, trainY1, testX1, testY1 = Preprocessing.Reshape_Data(train1, test1)
+            trainX2, trainY2, testX2, testY2 = Preprocessing.Reshape_Data(train2, test2)
             data = list()
             for i in range(len(trainX1)):
                 v1 = trainX1[i]
@@ -159,9 +198,18 @@ class Finance:
 
     def VARMAX(dataset1, dataset2, dataset3, order1, order2, coin):
         try:
-            trainX1, trainY1, testX1, testY1, ds1 = Preprocessing.Preprocess_Data(dataset1, 'VARMAX', coin)
-            trainX2, trainY2, testX2, testY2, ds2 = Preprocessing.Preprocess_Data(dataset2, 'VARMAX', coin)
-            trainX3, trainY3, testX3, testY3, ds3 = Preprocessing.Preprocess_Data(dataset3, 'VARMAX', coin)
+            ds1 = Preprocessing.Reshape_Float(dataset1)
+            ds2 = Preprocessing.Reshape_Float(dataset2)
+            ds3 = Preprocessing.Reshape_Float(dataset3)
+            ds1 = Preprocessing.Minmax_Scaler(ds1, 'VARMAX', coin)
+            ds2 = Preprocessing.Minmax_Scaler(ds2, 'VARMAX', coin)
+            ds3 = Preprocessing.Minmax_Scaler(ds3, 'VARMAX', coin)
+            train1, test1 = Preprocessing.Dataset_Split(ds1)
+            train2, test2 = Preprocessing.Dataset_Split(ds2)
+            train3, test3 = Preprocessing.Dataset_Split(ds3)
+            trainX1, trainY1, testX1, testY1 = Preprocessing.Reshape_Data(train1, test1)
+            trainX2, trainY2, testX2, testY2 = Preprocessing.Reshape_Data(train2, test2)
+            trainX3, trainY3, testX3, testY3 = Preprocessing.Reshape_Data(train3, test3)
             data = list()
             data_exog = list()
             for i in range(len(trainX1)):
@@ -189,7 +237,11 @@ class Finance:
 
     def SES(dataset, coin):
         try:
-            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'SES', coin)
+            ds = Preprocessing.Reshape_Float(dataset)
+            ds = Preprocessing.Minmax_Scaler(ds, 'SES', coin)
+            print(len(ds))
+            train, test = Preprocessing.Dataset_Split(ds)
+            trainX, trainY, testX, testY = Preprocessing.Reshape_Data(train, test)
             data = list()
             for i in range(len(trainX)):
                 row = trainX[i]
@@ -210,7 +262,11 @@ class Finance:
 
     def HWES(dataset, coin):
         try:
-            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'HWES', coin)
+            ds = Preprocessing.Reshape_Float(dataset)
+            ds = Preprocessing.Minmax_Scaler(ds, 'HWES', coin)
+            print(len(ds))
+            train, test = Preprocessing.Dataset_Split(ds)
+            trainX, trainY, testX, testY = Preprocessing.Reshape_Data(train, test)
             data = list()
             for i in range(len(trainX)):
                 row = trainX[i]
@@ -231,7 +287,13 @@ class Finance:
 
     def ARCH(dataset, coin):
         try:
-            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'ARCH', coin)
+            ds = Preprocessing.Reshape_Double(dataset)
+            ds = Preprocessing.Scaler_Standard(ds, 'ARCH', coin)
+            print(len(ds))
+            train, test = Preprocessing.Dataset_Split(ds)
+            trainX, trainY, testX, testY = Preprocessing.Reshape_Data_ARCH(train, test)
+            # fix random seed for reproducibility
+            numpy.random.seed(7)
             trainX = pd.DataFrame(trainX)
             n_test = 10
             print('Starting to fit model: ARCH')
@@ -249,17 +311,48 @@ class Finance:
 
     def GARCH(dataset, coin):
         try:
-            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'GARCH', coin)
-            trainX = pd.DataFrame(trainX)
-            n_test = 10
+            ds = Preprocessing.Reshape_Double(dataset)
+            ds = Preprocessing.Scaler_Standard(ds, 'GARCH', coin)
+            print(len(ds))
+            train, test = Preprocessing.Dataset_Split(ds)
+            trainX, trainY, testX, testY = Preprocessing.Reshape_Data_ARCH(train, test)
+            # fix random seed for reproducibility
+            numpy.random.seed(7)
+            # trainX = pd.DataFrame(trainX)
             print('Starting to fit model: GARCH')
             # Fit model
             model = arch_model(trainX, mean='Zero', vol='GARCH', p=15, q=15)
             model_fit = model.fit()
-            # Make prediction
-            #testX = model_fit.forecast(horizon=n_test)
-            #print('Predicted next value of: ')
             print(model_fit.summary())
+            # make predictions
+            print(trainX.shape)
+            trainPredict = model_fit.forecast(horizon=len(trainX))
+            print(trainPredict.mean)
+            print(trainY.shape)
+            print(testX.shape)
+            testPredict = model_fit.forecast(horizon=len(testX))
+            # invert predictions
+            trainPredict = Preprocessing.Invert_Transform(trainPredict.mean, coin, 'GARCH', 'SCALERSTANDARD')
+            print(trainPredict.shape)
+            print(trainPredict)
+            trainY = Preprocessing.Invert_Transform([trainY], coin, 'GARCH', 'SCALERSTANDARD')
+            print(trainY[0].shape)
+            testPredict = Preprocessing.Invert_Transform(testPredict.mean, coin, 'GARCH', 'SCALERSTANDARD')
+            print(testPredict.shape)
+            testY = Preprocessing.Invert_Transform([testY], coin, 'GARCH', 'SCALERSTANDARD')
+            print(testY[0].shape)
+            ds = Preprocessing.Invert_Transform(ds, coin, 'GARCH', 'SCALERSTANDARD')
+            # Estimate model performance
+            trainScore = math.sqrt(mean_squared_error(trainY[0], trainPredict[:, 0]))
+            print('Train Score: %.2f RMSE' % (trainScore))
+            testScore = math.sqrt(mean_squared_error(testY[0], testPredict[:, 0]))
+            print('Test Score: %.2f RMSE' % (testScore))
+            # shift train predictions for plotting
+            trainPredictPlot, testPredictPlot = ModelPlot.Shift_Plot(ds, trainPredict, testPredict)
+            # plot baseline and predictions
+            ModelPlot.Plot_Actual(ds, trainPredictPlot, testPredictPlot, coin, 'GARCH')
+            # Saving model to disk
+            ModelParameters.Save_Model(model_fit, coin, 'GARCH')
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False

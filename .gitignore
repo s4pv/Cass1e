@@ -6,6 +6,8 @@ keys.py
 #Nor optimization parameters
 model_parameters/
 scaler_parameters/
+model_plots/
+model_forecasts_plots/
 
 __*__
 

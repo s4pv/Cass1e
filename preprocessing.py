@@ -135,6 +135,7 @@ class Preprocessing:
             scaler = preprocessing.StandardScaler()
             ds = scaler.fit_transform(dataset)
             ScalerParameters.Save(coin, scaler, 'SCALERSTANDARD', model)
+            print('Model saved')
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
@@ -222,10 +223,54 @@ class Preprocessing:
             # Memory between batches -> batch_size = n_features = 1.
             print('final dataset shapes')
             trainX = numpy.reshape(trainX, (train_samples, train_timesteps, N_FEATURES))
-            #trainX = numpy.reshape(trainX, (train_samples, N_FEATURES))
+            #trainX = numpy.reshape(trainX, (train_samples, train_timesteps))
             print(trainX.shape)
-            #testX = numpy.reshape(testX, (test_samples, N_FEATURES))
+            #testX = numpy.reshape(testX, (test_samples, train_timesteps))
             testX = numpy.reshape(testX, (test_samples, test_timesteps, N_FEATURES))
+            print(testX.shape)
+            print(trainY.shape)
+            print(testY.shape)
+        except Exception as e:
+            print("An exception occurred - {}".format(e))
+            return False
+        return trainX, trainY, testX, testY
+
+    def Reshape_Data_ARCH(train, test):
+        try:
+
+            # reshape into X=t and Y=t+1. Added variables for predictions
+            print('Rearranging the datasets')
+            trainX, trainY = Preprocessing.Create_Dataset(train, LOOK_BACK)
+            testX, testY = Preprocessing.Create_Dataset(test, LOOK_BACK)
+            #print(trainX.shape)
+            #print(trainY.shape)
+            print(testX.shape)
+            print(testY.shape)
+
+            # Reshape input to be [samples, time steps, features].
+            # Features could be 5 if we want the whole candle for train and/or test: OHLCV
+
+            # Samples
+            print('Samples')
+            train_samples = trainX.shape[0]
+            print(train_samples)
+            test_samples = testX.shape[0]
+            print(test_samples)
+
+            # Timesteps
+            print('Timesteps')
+            train_timesteps = trainX.shape[1]
+            print(train_timesteps)
+            test_timesteps = testX.shape[1]
+            print(test_timesteps)
+
+            # Memory between batches -> batch_size = n_features = 1.
+            print('final dataset shapes')
+            #trainX = numpy.reshape(trainX, (train_samples, train_timesteps, N_FEATURES))
+            trainX = numpy.reshape(trainX, (train_samples, train_timesteps))
+            print(trainX.shape)
+            testX = numpy.reshape(testX, (test_samples, train_timesteps))
+            #testX = numpy.reshape(testX, (test_samples, test_timesteps, N_FEATURES))
             print(testX.shape)
             print(trainY.shape)
             print(testY.shape)
