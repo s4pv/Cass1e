@@ -16,11 +16,15 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 
+import math
 import warnings
 from sklearn.metrics import mean_squared_error
 from helper import Helper
 
-from dataprocessing import DataProcessing
+import numpy
+import matplotlib.pyplot as plt
+
+from preprocessing import Preprocessing
 
 warnings.filterwarnings("ignore")
 
@@ -51,7 +55,7 @@ VERBOSE = parsed_config['ml_options']['VERBOSE']
 class MachineLearning:
     def Logistic_Regression(dataset, coin):
         try:
-            trainX, trainY, testX, testY, ds = DataProcessing.Preprocess_Data(dataset, 'LR', coin)
+            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'LR', coin)
             logreg = LogisticRegression()
             print('starting the fit')
             print(trainX.shape)
@@ -70,7 +74,7 @@ class MachineLearning:
 
     def SVC(dataset, coin):
         try:
-            trainX, trainY, testX, testY, ds = DataProcessing.Preprocess_Data(dataset, 'SVC', coin)
+            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'SVC', coin)
             svc = SVC()
             svc.fit(trainX, trainY)
             #Yhat = svc.predict(testX)
@@ -83,7 +87,7 @@ class MachineLearning:
 
     def K_Neighbors_Classifier(dataset, coin):
         try:
-            trainX, trainY, testX, testY, ds = DataProcessing.Preprocess_Data(dataset, 'KNN', coin)
+            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'KNN', coin)
             knn = KNeighborsClassifier()
             knn.fit(trainX, trainY)
             #Yhat = knn.predict(testX)
@@ -96,7 +100,7 @@ class MachineLearning:
 
     def GaussianNB(dataset, coin):
         try:
-            trainX, trainY, testX, testY, ds = DataProcessing.Preprocess_Data(dataset, 'NB', coin)
+            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'NB', coin)
             gaussian = GaussianNB()
             print('gauss')
             gaussian.fit(trainX, trainY)
@@ -110,7 +114,7 @@ class MachineLearning:
 
     def Perceptron(dataset, coin):
         try:
-            trainX, trainY, testX, testY, ds = DataProcessing.Preprocess_Data(dataset, 'PN', coin)
+            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'PN', coin)
             perceptron = Perceptron()
             perceptron.fit(trainX, trainY)
             #Yhat = perceptron.predict(testX)
@@ -123,7 +127,7 @@ class MachineLearning:
 
     def Linear_SVC(dataset, coin):
         try:
-            trainX, trainY, testX, testY, ds = DataProcessing.Preprocess_Data(dataset, 'SVC', coin)
+            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'SVC', coin)
             linear_SVC = LinearSVC()
             linear_SVC.fit(trainX, trainY)
             #Yhat = linear_SVC.predict(testX)
@@ -136,7 +140,7 @@ class MachineLearning:
 
     def SGD_Classifier(dataset, coin):
         try:
-            trainX, trainY, testX, testY, ds = DataProcessing.Preprocess_Data(dataset, 'SGD', coin)
+            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'SGD', coin)
             sgd = SGDClassifier()
             sgd.fit(trainX, trainY)
             #Yhat = sgd.predict(testX)
@@ -149,7 +153,7 @@ class MachineLearning:
 
     def Decision_Tree(dataset, coin):
         try:
-            trainX, trainY, testX, testY, ds = DataProcessing.Preprocess_Data(dataset, 'CART', coin)
+            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'CART', coin)
             decision_tree = DecisionTreeClassifier()
             decision_tree.fit(trainX, trainY)
             #Yhat = decision_tree.predict(testX)
@@ -162,7 +166,7 @@ class MachineLearning:
 
     def Random_Forest(dataset, coin):
         try:
-            trainX, trainY, testX, testY, ds = DataProcessing.Preprocess_Data(dataset, 'RF', coin)
+            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'RF', coin)
             random_forest = RandomForestClassifier()
             random_forest.fit(trainX, trainY)
             #Yhat = random_forest.predict(testX)
@@ -175,7 +179,7 @@ class MachineLearning:
 
     def MLP(dataset, coin, n_feat, epoch, batch_size, verbose):
         try:
-            trainX, trainY, testX, testY, ds = DataProcessing.Preprocess_Data(dataset, 'MLP', coin)
+            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'MLP', coin)
             # Create and fit the Multi Layer Perceptron.
             mlp = Sequential()
             # Memory between batches -> batch_input_shape=(samples, time steps, n_features)
@@ -196,7 +200,7 @@ class MachineLearning:
 
     def CNN(dataset, coin):
         try:
-            trainX, trainY, testX, testY, ds = DataProcessing.Preprocess_Data(dataset, 'CNN', coin)
+            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'CNN', coin)
             # Create and fit the Convolutional Neural  network.
             cnn = Sequential()
             # Memory between batches -> batch_input_shape=(samples, time steps, n_features)
@@ -221,7 +225,7 @@ class MachineLearning:
 
     def RNN(dataset, coin):
         try:
-            trainX, trainY, testX, testY, ds = DataProcessing.Preprocess_Data(dataset, 'RNN', coin)
+            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'RNN', coin)
             # Create and fit the Recurrent Neural network.
             rnn = Sequential()
             # Memory between batches -> batch_input_shape=(samples, time steps, n_features)
@@ -247,7 +251,13 @@ class MachineLearning:
 
     def LSTM(dataset, coin):
         try:
-            trainX, trainY, testX, testY, ds = DataProcessing.Preprocess_Data(dataset, 'LSTM', coin)
+            ds = Preprocessing.Reshape_Float(dataset)
+            ds = Preprocessing.Minmax_Scaler(ds, 'LSTM', coin)
+            print(len(ds))
+            train, test = Preprocessing.Dataset_Split(ds)
+            trainX, trainY, testX, testY = Preprocessing.Reshape_Data(train, test)
+            # fix random seed for reproducibility
+            numpy.random.seed(7)
             # Create and fit the Long short Term Memory network.
             lstm = Sequential()
             # Memory between batches -> batch_input_shape=(samples, time steps, n_features)
@@ -259,13 +269,41 @@ class MachineLearning:
             # Memory between batches -> epoch can be added in a for
             lstm.fit(trainX, trainY, epochs=EPOCH, batch_size=BATCH_SIZE, verbose=VERBOSE, shuffle=False)
             print(lstm.summary())
-            #lstm.reset_states()
-            #print('lstm')
-            #Yhat = lstm.predict(testX)
-            #acc_lstm = round(lstm.score(trainX, trainY) * 100, 2)
-            #print(acc_lstm)
+            lstm.reset_states()
+            # make predictions
+            print(trainX.shape)
+            trainPredict = lstm.predict(trainX)
+            lstm.reset_states()
+            print(trainY.shape)
+            testPredict = lstm.predict(testX)
+            # invert predictions
+            trainPredict = Preprocessing.Invert_Transform(trainPredict, coin, 'LSTM', 'MINMAXSCALER')
+            print(trainPredict.shape)
+            trainY = Preprocessing.Invert_Transform([trainY], coin, 'LSTM', 'MINMAXSCALER')
+            print(trainY[0].shape)
+            testPredict = Preprocessing.Invert_Transform(testPredict, coin, 'LSTM', 'MINMAXSCALER')
+            print(testPredict.shape)
+            testY = Preprocessing.Invert_Transform([testY], coin, 'LSTM', 'MINMAXSCALER')
+            print(testY[0].shape)
+            # Estimate model performance
+            trainScore = lstm.evaluate(trainPredict[:,0], trainY[0], verbose=0)
+            print('Train Score: %.2f MSE (%.2f RMSE)' % (trainScore, math.sqrt(trainScore)))
+            testScore = lstm.evaluate(testPredict[:,0], testY[0], verbose=0)
+            print('Test Score: %.2f MSE (%.2f RMSE)' % (testScore, math.sqrt(testScore)))
+            # shift train predictions for plotting
+            trainPredictPlot = numpy.empty_like(ds)
+            trainPredictPlot[:, :] = numpy.nan
+            trainPredictPlot[LOOK_BACK:len(trainPredict) + LOOK_BACK, :] = trainPredict
+            # shift test predictions for plotting
+            testPredictPlot = numpy.empty_like(ds)
+            testPredictPlot[:, :] = numpy.nan
+            testPredictPlot[len(trainPredict) + (LOOK_BACK * 2) + 1:len(dataset) - 1, :] = testPredict
+            # plot baseline and predictions
+            plt.plot(Preprocessing.Invert_Transform(ds, coin, 'LSTM', 'MINMAXSCALER'), label='Actual')
+            plt.plot(trainPredictPlot, label='Training')
+            plt.plot(testPredictPlot, label='Testing')
+            plt.show()
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
         return True
-

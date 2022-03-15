@@ -1,27 +1,24 @@
 import matplotlib.pyplot as plt
 
 class ModelPlot:
+    # shift train predictions for plotting
+    trainPredictPlot = numpy.empty_like(dataset)
+    trainPredictPlot[:, :] = numpy.nan
+    trainPredictPlot[look_back:len(trainPredict) + look_back, :] = trainPredict
+    # shift test predictions for plotting
+    testPredictPlot = numpy.empty_like(dataset)
+    testPredictPlot[:, :] = numpy.nan
+    testPredictPlot[len(trainPredict) + (look_back * 2) + 1:len(dataset) - 1, :] = testPredict
+    # plot baseline and predictions
+    plt.plot(scaler.inverse_transform(dataset))
+    plt.plot(trainPredictPlot)
+    plt.plot(testPredictPlot)
+    plt.show()
 
 
-pred0 = model_fit.get_prediction(start=0, dynamic=False)
-pred0_ci = pred0.conf_int()
-pred1 = model_fit.get_prediction(start=0, dynamic=True)
-pred1_ci = pred1.conf_int()
-pred2 = model_fit.get_forecast(steps=predict)
-pred2_ci = pred2.conf_int()
-pred0 = pd.DataFrame(pred0.predicted_mean)
-pred1 = pd.DataFrame(pred1.predicted_mean)
-pred2 = pd.DataFrame(pred2.predicted_mean)
 
-ax = df1.plot(figsize=(20, 16))
-pred0.plot(ax=ax, label='1-step-ahead Forecast (get_predictions, dynamic=False)')
-pred1.plot(ax=ax, label='Dynamic Forecast (get_predictions, dynamic=True)')
-pred2.plot(ax=ax, label='Dynamic Forecast (get_forecast)')
-# ax.fill_between(pred2_ci.index, pred2_ci.iloc[:, 0], pred2_ci.iloc[:, 1], color='k', alpha=.1)
-plt.ylabel('Close Price')
-plt.xlabel('Date')
-plt.legend()
-plt.show()
+
+
 
 # shift train predictions for plotting
 print('Shifting positions for the training set to plot correctly.')

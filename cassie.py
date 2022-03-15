@@ -13,7 +13,7 @@ from portfolio import Portfolio
 from trades import Trades
 from asianrange import AsianRange
 from helper import Helper
-from dataprocessing import DataProcessing
+from preprocessing import Preprocessing
 from machinelearning import MachineLearning
 from finance import Finance
 from stats import Stats
@@ -79,7 +79,7 @@ def main():
                 # Forcing closing and deleting orders at the end of the new york season. 18 hours localtime.
                 dataset = cassie.client.get_klines(symbol=coin['symbol'], interval=cassie.TIMEFRAME,
                                                    limit=cassie.NO_DAYS)
-                dataset_ohlcv = DataProcessing.OHLCV_DataFrame(dataset)
+                dataset_ohlcv = Preprocessing.OHLCV_DataFrame(dataset)
                 returns = Portfolio.Return(dataset_ohlcv, coin)
                 data_returns[coin['symbol']] = returns[coin['symbol']]
 
@@ -96,9 +96,9 @@ def main():
                         #print(dataframe)
 
                         print('Running, fitting and comparing all the models. Saving the best data.')
-                        #Stats.Shapiro_Wilk(dataframe)
+                        #Stats.Shapiro_Wilk(dataset_ohlcv)
                         #names, results = ModelFit.Calculate(dataframe, coin)
-                        #MachineLearning.LSTM(dataframe, coin)
+                        MachineLearning.LSTM(dataset_ohlcv, coin)
                         print('This may take a while...')
                         print('Model chosen!!. So now, we have to fit the data for all the coins in the ticker list.')
                         print('Loading the model on the coin: ' + coin['symbol'])
@@ -141,16 +141,18 @@ def main():
 
                     dataset = cassie.client.get_klines(symbol=coin['symbol'], interval=cassie.TIMEFRAME,
                                                        limit=cassie.NO_DAYS)
-                    dataframe = DataProcessing.OHLCV_DataFrame(dataset)
+                    dataframe = Preprocessing.OHLCV_DataFrame(dataset)
                     upper_limit, lower_limit = AsianRange.update(coin['symbol'], dataframe)
-    print(data_returns)
+    #print(data_returns)
     #port_returns, port_vols = Portfolio.Simulations(data_returns)
     #Portfolio.Efficient_Frontier(data_returns)
-    Portfolio.Plot(data_returns)
+    #Portfolio.Plot(data_returns)
     #print(portfolio_alloc)
     #port_return, port_vols, sharpe = Portfolio.Stats(weights, data_returns)
     #optimal_sharpe_weights = Portfolio.Optimize_Sharpe(data_returns)
+    #print(optimal_sharpe_weights)
     #optimal_variance_weights = Portfolio.Optimize_Return(data_returns)
+    #print(optimal_variance_weights)
     #minimal_volatilities, target_returns = Portfolio.Efficient_Frontier(data_returns, port_returns)
     #Portfolio.Plot(port_returns, port_vols, optimal_sharpe_weights, optimal_variance_weights,
     #                             minimal_volatilities, target_returns)

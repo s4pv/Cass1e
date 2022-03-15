@@ -4,7 +4,7 @@ from numpy.random import randn
 from numpy.random import rand
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import RepeatedStratifiedKFold
-from dataprocessing import DataProcessing
+from preprocessing import Preprocessing
 import matplotlib.pyplot as plt
 from finance import Finance
 from machinelearning import MachineLearning
@@ -77,7 +77,10 @@ class ModelFit:
 		# define dataset
 		def Calculate(dataset, coin):
 			try:
-				trainX, trainY, testX, testY, ds = DataProcessing.Preprocess_Data(dataset, 'LR', coin) # ???
+				ds = Preprocessing.Reshape_Float(dataset)
+				ds = Preprocessing.Scaler_Standard(ds, 'LSTM', coin)
+				train, test = Preprocessing.Dataset_Split(ds)
+				trainX, trainY, testX, testY = Preprocessing.Reshape_Data(train, test)
 				# define the total iterations
 				n_iter = 100
 				# step size in the search space
@@ -95,14 +98,12 @@ class ModelFit:
 			try:
 				# prepare models
 				models = []
-				print('Estimating results for Multi-Layer Perceptron')
-				models.append(('MLP', MachineLearning.MLP(dataset, coin, cfg)))
 				print('Estimatings results for Convolutional Neural Networks')
 				models.append(('CNN', MachineLearning.CNN(dataset, coin)))
 				print('Estimatings results for Recurrent Neural Networks')
 				models.append(('RNN', MachineLearning.RNN(dataset, coin)))
 				print('Estimating results for Long Short Term Memory')
-				models.append(('LSTM', 'MachineLearning.LSTM'))
+				models.append(('LSTM', MachineLearning.LSTM(dataset, coin)))
 				print('Estimating results for Auto Regressive')
 				models.append(('AR', Finance.AR(dataset, 1)))
 				# Evaluate each model in turn
@@ -111,7 +112,7 @@ class ModelFit:
 				scoring = 'accuracy'
 				for name, model in models:
 					print('Starting to calculate the score for the model: ' + model)
-					cv_results = ModelFit.Calculate(dataset, coin, model, cfg) # por ultimo hacerla con IFS
+					cv_results = ModelFit.Calculate(dataset, coin, model) # ifs
 					results.append(cv_results)
 					names.append(name)
 					msg = "%s: %f (%f)" % (name, cv_results.mean(), cv_results.std())

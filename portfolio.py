@@ -3,7 +3,7 @@ import keys
 import numpy as np
 import pandas as pd
 import warnings
-from dataprocessing import DataProcessing
+from preprocessing import Preprocessing
 import matplotlib.pyplot as plt
 import time
 import scipy.optimize as optimize
@@ -32,7 +32,7 @@ class Portfolio:
 
     def Return(dataset, coin):
         try:
-            dataframe = DataProcessing.Reshape_Data(dataset, 'NO_MODEL')
+            dataframe = Preprocessing.Reshape_Float(dataset)
             dataframe = pd.DataFrame(dataframe)
             # dataframe[coin['symbol']] = dataframe / dataframe.shift(1) - 1
             dataframe[coin['symbol']] = np.log(dataframe/dataframe.shift(1))
@@ -239,6 +239,7 @@ class Portfolio:
             return False
         return True
 
+#There is missing sintax below here
     def Capital_Market_Line(data_returns):
         try:
             minimal_volatilities, target_returns = Portfolio.Efficient_Frontier(data_returns)

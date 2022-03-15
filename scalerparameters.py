@@ -1,25 +1,13 @@
 import os
 import pickle
-from sklearn import preprocessing
 
 class ScalerParameters:
 
-    def save(dataset, coin, method, modelname):
+    # For the models: LR, KNN, CART, SVC, NB, PN, SGD, RF do nothing
+    # For arch and garch use min max scaler
+    # For other models use standard scaler
+    def Save(coin, scaler, method, modelname):
         try:
-            # Normalize the dataset
-            if method == 'MINMAXSCALER':
-                print('Starting to normalize the set with MinMaxScaler')
-                scaler = preprocessing.MinMaxScaler(feature_range=(0, 1))
-            elif method == 'SCALERSTANDARD':
-                print('Starting to standardize the set with StandardScaler')
-                scaler = preprocessing.StandardScaler()
-            elif method == 'ROBUSTSCALER':
-                scaler = preprocessing.RobustScaler()
-            elif method == 'MAXABSSCALER':
-                scaler = preprocessing.MaxAbsScaler()
-            elif method == 'NORMALIZER':
-                scaler = preprocessing.Normalizer()
-            ds = scaler.fit_transform(dataset)
             # Save the scaler to disk
             print('Saving the scaler to the disk')
             filename = os.path.join('C:/Users/pablo/PycharmProjects/Cass1e/scaler_parameters',
@@ -29,16 +17,11 @@ class ScalerParameters:
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
-        return ds, modelname
+        return
 
-    def load(coin, method, modelname):
+    def Load(coin, modelname, method):
         try:
-            # Load scaler into new model
-            if modelname == 'LR' or modelname == 'KNN' or modelname == 'CART' or modelname == 'SVC'\
-                    or modelname == 'NB' or modelname == 'PN' or modelname == 'SGD' or modelname == 'RF':
-                scaler = 0
-            else:
-                scaler = pickle.load(open(os.path.join('C:/Users/pablo/PycharmProjects/Cass1e/scaler_parameters',
+            scaler = pickle.load(open(os.path.join('C:/Users/pablo/PycharmProjects/Cass1e/scaler_parameters',
                                                    str(coin['symbol']) + '_' + str(modelname) + '_' + method +
                                                       '_scaler.pkl'), 'rb'))
             print('Scaler loaded correctly')

@@ -12,7 +12,7 @@ from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from arch import arch_model
 import pandas as pd
 import matplotlib.pyplot as plt
-from dataprocessing import DataProcessing
+from preprocessing import Preprocessing
 from scalerparameters import ScalerParameters
 
 warnings.filterwarnings("ignore")
@@ -30,7 +30,7 @@ class Finance:
 
     def AR(dataset, lag, coin):
         try:
-            trainX, trainY, testX, testY, ds = DataProcessing.Preprocess_Data(dataset, 'AR', coin)
+            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'AR', coin)
             print('Starting to fit model: AR')
             # fit model
             model = AutoReg(trainX, lags=lag)
@@ -48,7 +48,7 @@ class Finance:
 
     def ARIMA(dataset, order1, order2, order3, coin):
         try:
-            trainX, trainY, testX, testY, ds = DataProcessing.Preprocess_Data(dataset, 'ARIMA', coin)
+            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'ARIMA', coin)
             print('Starting to fit model: ARIMA')
             # fit model
             model = ARIMA(trainX, order=(order1, order2, order3))
@@ -66,7 +66,7 @@ class Finance:
 
     def SARIMA(dataset, order1, order2, order3, sorder1, sorder2, sorder3, sorder4, predict, coin):
         try:
-            trainX, trainY, testX, testY, ds = DataProcessing.Preprocess_Data(dataset, 'SARIMA', coin)
+            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'SARIMA', coin)
             print('Starting to fit model: SARIMA')
             # fit model
             model = SARIMAX(trainX, order=(order1, order2, order3),
@@ -89,9 +89,9 @@ class Finance:
     def SARIMAX(dataset1, dataset2, dataset3, order1, order2, order3, sorder1, sorder2, sorder3, sorder4, predict,
                 coin):
         try:
-            trainX1, trainY1, testX1, testY1, ds1 = DataProcessing.Preprocess_Data(dataset1, 'SARIMAX', coin)
-            trainX2, trainY2, testX2, testY2, ds2 = DataProcessing.Preprocess_Data(dataset2, 'SARIMAX', coin)
-            trainX3, trainY3, testX3, testY3, ds3 = DataProcessing.Preprocess_Data(dataset3, 'SARIMAX', coin)
+            trainX1, trainY1, testX1, testY1, ds1 = Preprocessing.Preprocess_Data(dataset1, 'SARIMAX', coin)
+            trainX2, trainY2, testX2, testY2, ds2 = Preprocessing.Preprocess_Data(dataset2, 'SARIMAX', coin)
+            trainX3, trainY3, testX3, testY3, ds3 = Preprocessing.Preprocess_Data(dataset3, 'SARIMAX', coin)
             print('Starting to fit model: SARIMAX')
             # fit model
             model = SARIMAX(trainX1, trainX2, order=(order1, order2, order3), seasonal_order=(sorder1, sorder2,
@@ -111,8 +111,8 @@ class Finance:
 
     def VAR(dataset1, dataset2, coin):
         try:
-            trainX1, trainY1, testX1, testY1, ds1 = DataProcessing.Preprocess_Data(dataset1, 'VAR', coin)
-            trainX2, trainY2, testX2, testY2, ds2 = DataProcessing.Preprocess_Data(dataset2, 'VAR', coin)
+            trainX1, trainY1, testX1, testY1, ds1 = Preprocessing.Preprocess_Data(dataset1, 'VAR', coin)
+            trainX2, trainY2, testX2, testY2, ds2 = Preprocessing.Preprocess_Data(dataset2, 'VAR', coin)
             data = list()
             for i in range(len(trainX1)):
                 v1 = trainX1[i]
@@ -135,8 +135,8 @@ class Finance:
 
     def VARMA(dataset1, dataset2, order1, order2, coin):
         try:
-            trainX1, trainY1, testX1, testY1, ds1 = DataProcessing.Preprocess_Data(dataset1, 'VARMA', coin)
-            trainX2, trainY2, testX2, testY2, ds2 = DataProcessing.Preprocess_Data(dataset2, 'VARMA', coin)
+            trainX1, trainY1, testX1, testY1, ds1 = Preprocessing.Preprocess_Data(dataset1, 'VARMA', coin)
+            trainX2, trainY2, testX2, testY2, ds2 = Preprocessing.Preprocess_Data(dataset2, 'VARMA', coin)
             data = list()
             for i in range(len(trainX1)):
                 v1 = trainX1[i]
@@ -159,9 +159,9 @@ class Finance:
 
     def VARMAX(dataset1, dataset2, dataset3, order1, order2, coin):
         try:
-            trainX1, trainY1, testX1, testY1, ds1 = DataProcessing.Preprocess_Data(dataset1, 'VARMAX', coin)
-            trainX2, trainY2, testX2, testY2, ds2 = DataProcessing.Preprocess_Data(dataset2, 'VARMAX', coin)
-            trainX3, trainY3, testX3, testY3, ds3 = DataProcessing.Preprocess_Data(dataset3, 'VARMAX', coin)
+            trainX1, trainY1, testX1, testY1, ds1 = Preprocessing.Preprocess_Data(dataset1, 'VARMAX', coin)
+            trainX2, trainY2, testX2, testY2, ds2 = Preprocessing.Preprocess_Data(dataset2, 'VARMAX', coin)
+            trainX3, trainY3, testX3, testY3, ds3 = Preprocessing.Preprocess_Data(dataset3, 'VARMAX', coin)
             data = list()
             data_exog = list()
             for i in range(len(trainX1)):
@@ -189,7 +189,7 @@ class Finance:
 
     def SES(dataset, coin):
         try:
-            trainX, trainY, testX, testY, ds = DataProcessing.Preprocess_Data(dataset, 'SES', coin)
+            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'SES', coin)
             data = list()
             for i in range(len(trainX)):
                 row = trainX[i]
@@ -210,7 +210,7 @@ class Finance:
 
     def HWES(dataset, coin):
         try:
-            trainX, trainY, testX, testY, ds = DataProcessing.Preprocess_Data(dataset, 'HWES', coin)
+            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'HWES', coin)
             data = list()
             for i in range(len(trainX)):
                 row = trainX[i]
@@ -231,7 +231,7 @@ class Finance:
 
     def ARCH(dataset, coin):
         try:
-            trainX, trainY, testX, testY, ds = DataProcessing.Preprocess_Data(dataset, 'ARCH', coin)
+            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'ARCH', coin)
             trainX = pd.DataFrame(trainX)
             n_test = 10
             print('Starting to fit model: ARCH')
@@ -249,7 +249,7 @@ class Finance:
 
     def GARCH(dataset, coin):
         try:
-            trainX, trainY, testX, testY, ds = DataProcessing.Preprocess_Data(dataset, 'GARCH', coin)
+            trainX, trainY, testX, testY, ds = Preprocessing.Preprocess_Data(dataset, 'GARCH', coin)
             trainX = pd.DataFrame(trainX)
             n_test = 10
             print('Starting to fit model: GARCH')
