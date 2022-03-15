@@ -221,11 +221,11 @@ class Preprocessing:
 
             # Memory between batches -> batch_size = n_features = 1.
             print('final dataset shapes')
-            trainX = numpy.reshape(trainX, (train_samples, N_FEATURES, train_timesteps))
+            trainX = numpy.reshape(trainX, (train_samples, train_timesteps, N_FEATURES))
             #trainX = numpy.reshape(trainX, (train_samples, N_FEATURES))
             print(trainX.shape)
             #testX = numpy.reshape(testX, (test_samples, N_FEATURES))
-            testX = numpy.reshape(testX, (test_samples, N_FEATURES, test_timesteps))
+            testX = numpy.reshape(testX, (test_samples, test_timesteps, N_FEATURES))
             print(testX.shape)
             print(trainY.shape)
             print(testY.shape)

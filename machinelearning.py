@@ -263,19 +263,20 @@ class MachineLearning:
             # Memory between batches -> batch_input_shape=(samples, time steps, n_features)
             lstm.add(LSTM(NEURONS, batch_input_shape=(BATCH_SIZE, LOOK_BACK, N_FEATURES), stateful=True, return_sequences=True))
             lstm.add(LSTM(NEURONS, batch_input_shape=(BATCH_SIZE, LOOK_BACK, N_FEATURES), stateful=True))
-            lstm.add(Dropout(DROPOUT))
+            #lstm.add(Dropout(DROPOUT))
             lstm.add(Dense(OUTPUT_DIM))
             lstm.compile(loss='mean_squared_error', optimizer='adam')
             # Memory between batches -> epoch can be added in a for
-            lstm.fit(trainX, trainY, epochs=EPOCH, batch_size=BATCH_SIZE, verbose=VERBOSE, shuffle=False)
+            for i in range(EPOCH):
+                lstm.fit(trainX, trainY, epochs=1, batch_size=BATCH_SIZE, verbose=VERBOSE, shuffle=False)
+                lstm.reset_states()
             print(lstm.summary())
-            lstm.reset_states()
             # make predictions
             print(trainX.shape)
-            trainPredict = lstm.predict(trainX)
+            trainPredict = lstm.predict(trainX, batch_size=BATCH_SIZE)
             lstm.reset_states()
             print(trainY.shape)
-            testPredict = lstm.predict(testX)
+            testPredict = lstm.predict(testX, batch_size=BATCH_SIZE)
             # invert predictions
             trainPredict = Preprocessing.Invert_Transform(trainPredict, coin, 'LSTM', 'MINMAXSCALER')
             print(trainPredict.shape)
@@ -286,10 +287,10 @@ class MachineLearning:
             testY = Preprocessing.Invert_Transform([testY], coin, 'LSTM', 'MINMAXSCALER')
             print(testY[0].shape)
             # Estimate model performance
-            trainScore = lstm.evaluate(trainPredict[:,0], trainY[0], verbose=0)
-            print('Train Score: %.2f MSE (%.2f RMSE)' % (trainScore, math.sqrt(trainScore)))
-            testScore = lstm.evaluate(testPredict[:,0], testY[0], verbose=0)
-            print('Test Score: %.2f MSE (%.2f RMSE)' % (testScore, math.sqrt(testScore)))
+            trainScore = math.sqrt(mean_squared_error(trainY[0], trainPredict[:, 0]))
+            print('Train Score: %.2f RMSE' % (trainScore))
+            testScore = math.sqrt(mean_squared_error(testY[0], testPredict[:, 0]))
+            print('Test Score: %.2f RMSE' % (testScore))
             # shift train predictions for plotting
             trainPredictPlot = numpy.empty_like(ds)
             trainPredictPlot[:, :] = numpy.nan

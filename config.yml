@@ -14,12 +14,12 @@ model_options:
 # These parameters apply for the modern machine learning models
 ml_options:
   LOOK_BACK: 1
-  TRAIN_SIZE: 0.95
+  TRAIN_SIZE: 0.67
   NEURONS: 4
   DROPOUT: 0.15
   BATCH_SIZE: 1
   OUTPUT_DIM: 1
-  EPOCH: 4
+  EPOCH: 100
   N_FEATURES: 1
   HIDDEN_UNITS: 2
   TIME_STEPS: 1
@@ -27,7 +27,7 @@ ml_options:
   FILTERS: 16
   KERNEL_SIZE: 1
   POOL_SIZE: 1
-  VERBOSE: 1
+  VERBOSE: 2
 
 # These options apply to the trading methods the script executes
 trading_options:
