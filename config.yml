@@ -3,30 +3,19 @@ script_options:
   LOG_TRADES: True
   LOG_FILE: 'trades.txt'
 
-# Forecasting periods
-forecast_options:
-  TO_FORECAST: 50
-
 # Data extraction parameters for modeling
 model_options:
   NO_DAYS: 1000
 
 # These parameters apply for the modern machine learning models
 ml_options:
-  LOOK_BACK: 1
-  TRAIN_SIZE: 0.67
-  NEURONS: 4
+  TRAIN_SIZE: 0.9
+  NEURONS: 128
   DROPOUT: 0.15
-  BATCH_SIZE: 1
-  OUTPUT_DIM: 1
-  EPOCH: 100
-  N_FEATURES: 1
-  HIDDEN_UNITS: 2
-  TIME_STEPS: 1
-  DENSE_UNITS: 1
-  FILTERS: 16
-  KERNEL_SIZE: 1
-  POOL_SIZE: 1
+  N_STEPS_IN: 1
+  N_STEPS_OUT: 32
+  EPOCH: 1000
+  N_FEATURES: 4
   VERBOSE: 2
 
 # These options apply to the trading methods the script executes

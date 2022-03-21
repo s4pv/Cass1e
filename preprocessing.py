@@ -1,5 +1,6 @@
 import numpy
 from datetime import datetime
+import pandas as pd
 from pandas import DataFrame as Dataframe
 from helper import Helper
 from sklearn import preprocessing
@@ -13,8 +14,10 @@ parsed_config = Helper.load_config('config.yml')
 
 NO_DAYS = parsed_config['model_options']['NO_DAYS']
 TRAIN_SIZE = parsed_config['ml_options']['TRAIN_SIZE']
-LOOK_BACK = parsed_config['ml_options']['LOOK_BACK']
 N_FEATURES = parsed_config['ml_options']['N_FEATURES']
+N_STEPS_IN = parsed_config['ml_options']['N_STEPS_IN']
+N_STEPS_OUT = parsed_config['ml_options']['N_STEPS_OUT']
+
 
 class Preprocessing:
 
@@ -39,82 +42,47 @@ class Preprocessing:
             final_dataframe = candles_dataframe.join(dataframe_final_date)
             final_dataframe.set_index('date', inplace=True)
             final_dataframe.columns = ['open', 'high', 'low', 'close', 'volume']
+            final_dataframe = final_dataframe.reindex(['volume', 'open', 'high', 'low', 'close'], axis=1)
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
         return final_dataframe
 
-    # Look_back are timesteps
 
-    def Create_Dataset(dataset, LOOK_BACK):
+    # split a multivariate sequence into samples
+    def Split_Sequences(sequences, N_STEPS_IN, N_STEPS_OUT):
         try:
-            dataX, dataY = [], []
-            for i in range(len(dataset) - LOOK_BACK - 1):
-                a = dataset[i:(i + LOOK_BACK), 0]
-                dataX.append(a)
-                dataY.append(dataset[i + LOOK_BACK, 0])
+            X, y = list(), list()
+            for i in range(len(sequences)):
+                # find the end of this pattern
+                end_ix = i + N_STEPS_IN
+                out_end_ix = end_ix + N_STEPS_OUT - 1
+                # check if we are beyond the dataset
+                if out_end_ix > len(sequences):
+                    break
+                # gather input and output parts of the pattern
+                seq_x, seq_y = sequences[i:end_ix, :-1], sequences[end_ix - 1:out_end_ix, -1]
+                X.append(seq_x)
+                y.append(seq_y)
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
-        return numpy.array(dataX), numpy.array(dataY)
+        return numpy.array(X), numpy.array(y)
 
 
-    # For the models: LR, KNN, CART, SVC, NB, PN, SGD, RF
-    def Reshape_Int(dataset):
-        try:
-            # Convert an array of values into a dataset matrix
-            # Load the dataset
-            print('Reshaping the data to integer')
-            dataframe = dataset['close']
-            data = dataframe.values
-            print('setting int')
-            lab_enc = preprocessing.LabelEncoder()
-            data = lab_enc.fit_transform(data)
-            data = numpy.reshape(data, (len(data), 1))
-            # data = numpy.reshape(data, (NO_DAYS, 1))
-            # data = numpy.reshape(data, len(data))
-        except Exception as e:
-            print("An exception occurred - {}".format(e))
-            return False
-        return data
-
-    # For the arch and garch models only
-    def Reshape_Double(dataset):
-        try:
-            # Convert an array of values into a dataset matrix
-            # Load the dataset
-            print('Reshaping the data to double')
-            dataframe = dataset['close']
-            data = dataframe.values
-            print('setting double')
-            data = data.astype('double')
-            data = numpy.reshape(data, (len(data), 1))
-            # data = numpy.reshape(data, (NO_DAYS, 1))
-            # data = numpy.reshape(data, len(data))
-        except Exception as e:
-            print("An exception occurred - {}".format(e))
-            return False
-        return data
-
-    # For other models use
     def Reshape_Float(dataset):
         try:
             # Convert an array of values into a dataset matrix
             # Load the dataset
             print('Reshaping the data to float')
-            dataframe = dataset['close']
-            data = dataframe.values
+            data = dataset.values
             print('setting float')
             data = data.astype('float32')
-            data = numpy.reshape(data, (len(data), 1))
-            # data = numpy.reshape(data, (NO_DAYS, 1))
-            # data = numpy.reshape(data, len(data))
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
         return data
 
-    # For others models only
     def Minmax_Scaler(dataset, model, coin):
         try:
             print('Starting to normalize the set with Min Max Scaler')
@@ -126,158 +94,41 @@ class Preprocessing:
             return False
         return ds
 
-    # For the models: LR, KNN, CART, SVC, NB, PN, SGD, RF do nothing
-
-    # For the arch and garch models only
-    def Scaler_Standard(dataset, model, coin):
-        try:
-            print('Starting to normalize the set with Scaler Standard')
-            scaler = preprocessing.StandardScaler()
-            ds = scaler.fit_transform(dataset)
-            ScalerParameters.Save(coin, scaler, 'SCALERSTANDARD', model)
-            print('Model saved')
-        except Exception as e:
-            print("An exception occurred - {}".format(e))
-            return False
-        return ds
-
-    def Robust_Scaler(dataset, model, coin):
-        try:
-            print('Starting to normalize the set with Robust Scaler')
-            scaler = preprocessing.RobustScaler()
-            ds = scaler.fit_transform(dataset)
-            ScalerParameters.Save(coin, scaler, 'ROBUSTSCALER', model)
-        except Exception as e:
-            print("An exception occurred - {}".format(e))
-            return False
-        return ds
-
-    def Maxabs_Scaler(dataset, model, coin):
-        try:
-            print('Starting to normalize the set with Max Abs Scaler')
-            scaler = preprocessing.MaxAbsScaler()
-            ds = scaler.fit_transform(dataset)
-            ScalerParameters.Save(coin, scaler, 'MAXABSSCALER', model)
-        except Exception as e:
-            print("An exception occurred - {}".format(e))
-            return False
-        return ds
-
-    def Normalizer_Scaler(dataset, model, coin):
-        try:
-            print('Starting to normalize the set with Normalizer Scaler')
-            scaler = preprocessing.Normalizer()
-            ds = scaler.fit_transform(dataset)
-            ScalerParameters.Save(coin, scaler, 'NORMALIZER', model)
-        except Exception as e:
-            print("An exception occurred - {}".format(e))
-            return False
-        return ds
-
     def Dataset_Split(dataset):
         try:
             print('Splitting the dataset into training and test sets')
             train_size = int(len(dataset) * TRAIN_SIZE)
-            #print(train_size)
+            print(train_size)
             test_size = len(dataset) - train_size
-            #print(test_size)
-
+            print(test_size)
             train, test = dataset[0:train_size,:], dataset[train_size:len(dataset),:]
-            #print(train.shape)
-            #print(test.shape)
+            print(train.shape)
+            print(test.shape)
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
         return train, test
 
-
-    def Reshape_Data(train, test):
+    def Prepare_Data(dataset):
         try:
-
-            # reshape into X=t and Y=t+1. Added variables for predictions
-            print('Rearranging the datasets')
-            trainX, trainY = Preprocessing.Create_Dataset(train, LOOK_BACK)
-            testX, testY = Preprocessing.Create_Dataset(test, LOOK_BACK)
-            #print(trainX.shape)
-            #print(trainY.shape)
-            print(testX.shape)
-            print(testY.shape)
-
-            # Reshape input to be [samples, time steps, features].
-            # Features could be 5 if we want the whole candle for train and/or test: OHLCV
-
-            # Samples
-            print('Samples')
-            train_samples = trainX.shape[0]
-            print(train_samples)
-            test_samples = testX.shape[0]
-            print(test_samples)
-
-            # Timesteps
-            print('Timesteps')
-            train_timesteps = trainX.shape[1]
-            print(train_timesteps)
-            test_timesteps = testX.shape[1]
-            print(test_timesteps)
-
-            # Memory between batches -> batch_size = n_features = 1.
-            print('final dataset shapes')
-            trainX = numpy.reshape(trainX, (train_samples, train_timesteps, N_FEATURES))
-            #trainX = numpy.reshape(trainX, (train_samples, train_timesteps))
-            print(trainX.shape)
-            #testX = numpy.reshape(testX, (test_samples, train_timesteps))
-            testX = numpy.reshape(testX, (test_samples, test_timesteps, N_FEATURES))
-            print(testX.shape)
-            print(trainY.shape)
-            print(testY.shape)
+            # preprocess data into 2 sets to scale and invert without problems
+            ds_c = dataset['close']
+            ds_ohlcv = pd.DataFrame(dataset)
+            ds_ohlv = ds_ohlcv.drop(columns=['close'])
+            ds_f_ohlcv = Preprocessing.Reshape_Float(ds_ohlcv)
+            ds_f_ohlv = Preprocessing.Reshape_Float(ds_ohlv)
+            ds_f_c = Preprocessing.Reshape_Float(ds_c)
+            # data to array
+            ds_f_ohlcv = numpy.array(ds_f_ohlcv)
+            ds_f_ohlv = numpy.array(ds_f_ohlv)
+            ds_f_c = numpy.array(ds_f_c).reshape(-1, 1)
+            print(ds_f_ohlv.shape)
+            print(ds_f_c.shape)
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
-        return trainX, trainY, testX, testY
+        return ds_f_c, ds_f_ohlv, ds_f_ohlcv
 
-    def Reshape_Data_ARCH(train, test):
-        try:
-
-            # reshape into X=t and Y=t+1. Added variables for predictions
-            print('Rearranging the datasets')
-            trainX, trainY = Preprocessing.Create_Dataset(train, LOOK_BACK)
-            testX, testY = Preprocessing.Create_Dataset(test, LOOK_BACK)
-            #print(trainX.shape)
-            #print(trainY.shape)
-            print(testX.shape)
-            print(testY.shape)
-
-            # Reshape input to be [samples, time steps, features].
-            # Features could be 5 if we want the whole candle for train and/or test: OHLCV
-
-            # Samples
-            print('Samples')
-            train_samples = trainX.shape[0]
-            print(train_samples)
-            test_samples = testX.shape[0]
-            print(test_samples)
-
-            # Timesteps
-            print('Timesteps')
-            train_timesteps = trainX.shape[1]
-            print(train_timesteps)
-            test_timesteps = testX.shape[1]
-            print(test_timesteps)
-
-            # Memory between batches -> batch_size = n_features = 1.
-            print('final dataset shapes')
-            #trainX = numpy.reshape(trainX, (train_samples, train_timesteps, N_FEATURES))
-            trainX = numpy.reshape(trainX, (train_samples, train_timesteps))
-            print(trainX.shape)
-            testX = numpy.reshape(testX, (test_samples, train_timesteps))
-            #testX = numpy.reshape(testX, (test_samples, test_timesteps, N_FEATURES))
-            print(testX.shape)
-            print(trainY.shape)
-            print(testY.shape)
-        except Exception as e:
-            print("An exception occurred - {}".format(e))
-            return False
-        return trainX, trainY, testX, testY
 
     def Invert_Transform(ds, coin, modelname, method):
         try:

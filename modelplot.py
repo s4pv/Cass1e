@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy
+import pandas as pd
 import warnings
 import os
 from helper import Helper
@@ -9,10 +10,8 @@ warnings.filterwarnings("ignore")
 # Configuration and class variables
 parsed_config = Helper.load_config('config.yml')
 
-TO_FORECAST = parsed_config['forecast_options']['TO_FORECAST']
-
-LOOK_BACK = parsed_config['ml_options']['LOOK_BACK']
-
+N_STEPS_IN = parsed_config['ml_options']['N_STEPS_IN']
+N_STEPS_OUT = parsed_config['ml_options']['N_STEPS_OUT']
 
 class ModelPlot:
     def Shift_Plot(ds, trainPredict, testPredict):
@@ -20,11 +19,11 @@ class ModelPlot:
             # shift train predictions for plotting
             trainPredictPlot = numpy.empty_like(ds)
             trainPredictPlot[:, :] = numpy.nan
-            trainPredictPlot[LOOK_BACK:len(trainPredict) + LOOK_BACK, :] = trainPredict
+            trainPredictPlot[N_STEPS_IN:len(trainPredict) + N_STEPS_IN, :] = trainPredict
             # shift test predictions for plotting
             testPredictPlot = numpy.empty_like(ds)
             testPredictPlot[:, :] = numpy.nan
-            testPredictPlot[len(trainPredict) + (LOOK_BACK * 2) + 1:len(ds) - 1, :] = testPredict
+            testPredictPlot[len(trainPredict) + (N_STEPS_IN * 2) + 1:len(ds) - 1, :] = testPredict
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
@@ -35,24 +34,24 @@ class ModelPlot:
             # shift train predictions for plotting
             trainPredictPlot = numpy.empty_like(forecastDB)
             to_append = numpy.array([[0]])
-            for x in range(TO_FORECAST):
+            for x in range(N_STEPS_OUT):
                 trainPredictPlot = numpy.append(trainPredictPlot, to_append, 0)
             trainPredictPlot[:, :] = numpy.nan
-            trainPredictPlot[LOOK_BACK:len(trainPredict) + LOOK_BACK, :] = trainPredict
+            trainPredictPlot[N_STEPS_IN:len(trainPredict) + N_STEPS_IN, :] = trainPredict
             # shift test predictions for plotting
             forecastPlot = numpy.empty_like(forecast)
             to_append = numpy.array([[0]])
-            for x in range(TO_FORECAST):
+            for x in range(N_STEPS_OUT):
                 forecastPlot = numpy.append(forecastPlot, to_append, 0)
             forecastPlot[:, :] = numpy.nan
-            forecastPlot[len(trainPredict) + (LOOK_BACK * 2) + 1:len(forecastDB) - 1 + TO_FORECAST, :] = forecast
+            forecastPlot[len(trainPredict) + (N_STEPS_IN * 2) + 1:len(forecastDB) - 1 + N_STEPS_OUT, :] = forecast
             # append # of predictions to the whole database for plotting
             forecastDBPlot = numpy.empty_like(forecastDB)
             to_append = numpy.array([[0]])
-            for x in range(TO_FORECAST):
+            for x in range(N_STEPS_OUT):
                 forecastDBPlot = numpy.append(forecastDB, to_append, 0)
             forecastDBPlot[:, :] = numpy.nan
-            forecastDBPlot[LOOK_BACK:len(forecastDB) - 1 + TO_FORECAST, :] = forecastDB
+            forecastDBPlot[N_STEPS_IN:len(forecastDB) - 1 + N_STEPS_OUT, :] = forecastDB
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False

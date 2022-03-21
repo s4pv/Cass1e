@@ -9,13 +9,12 @@ Cassandra aims to:
 2. First create keys.py with public (Pkey) and secret key (Skey) info of your binance account to connect to the API.
 Once connected to the API run data.py to extract databases (csv) to train forecasting models.
 Example: Daily Ethereum OHLC and volume data.
-3. Manually choose best fit between legacy finance models and machine learning models according to asset data.
-Statistical tests and plots if wanted.
+3. Model: Bidirectional multivariable (OHLV) multi-step LSTM to predict (C). Statistical tests and plots
+if required/wanted.
 4. With the chosen model, fit and forecast the assets in tickers and create finance model boundaries.
 5. With the forecast, the bot can trade and optimize portfolios.
 
-#Further investigation
-1. Multi-inputs (OHLV) to forecast C
-2. Hybrid models (ex: ARIMA + LSTM)
-3. CLI
-4. Telegram API
+# Further steps
+1. autoML
+2. CLI
+3. Telegram API
