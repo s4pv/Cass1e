@@ -75,7 +75,7 @@ class Portfolio:
             plt.ylabel('Portfolio Return')
             plt.colorbar(label='Sharpe ratio (not adjusted for short rate)')
             #plt.show()
-            filename = os.path.join('C:/Users/pablo/PycharmProjects/Cass1e/model_plots/simulations.png')
+            filename = os.path.join('C:/Users/pablo/PycharmProjects/Cass1e/portfolio_plots/simulations.png')
             plt.savefig(filename)
             plt.close()
             print('Elapsed Time: %.2f seconds' % (time.time() - start))
@@ -236,7 +236,7 @@ class Portfolio:
             plt.ylabel('Portfolio Return')
             plt.colorbar(label='Sharpe ratio (not adjusted for short rate)')
             #plt.show()
-            filename = os.path.join('C:/Users/pablo/PycharmProjects/Cass1e/model_plots/Efficient_Frontier.png')
+            filename = os.path.join('C:/Users/pablo/PycharmProjects/Cass1e/portfolio_plots/Efficient_Frontier.png')
             plt.savefig(filename)
             plt.close()
         except Exception as e:

@@ -96,8 +96,8 @@ def main():
 
                         print('Running, fitting and comparing all the models. Saving the best data.')
                         #Stats.Shapiro_Wilk(dataset_ohlcv)
-                        MachineLearning.LSTM(dataset_ohlcv, coin)
-                        #ModelForecast.Predict_LSTM(dataset_ohlcv, coin)
+                        #MachineLearning.LSTM(dataset_ohlcv, coin)
+                        ModelForecast.Predict_LSTM(dataset_ohlcv, coin)
                         print('This may take a while...')
                         print('Model chosen!!. So now, we have to fit the data for all the coins in the ticker list.')
                         print('Loading the model on the coin: ' + coin['symbol'])

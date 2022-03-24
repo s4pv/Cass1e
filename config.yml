@@ -14,7 +14,7 @@ ml_options:
   DROPOUT: 0.15
   N_STEPS_IN: 1
   N_STEPS_OUT: 32
-  EPOCH: 1000
+  EPOCH: 1
   N_FEATURES: 4
   VERBOSE: 2
 
