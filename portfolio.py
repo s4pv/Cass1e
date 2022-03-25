@@ -3,16 +3,19 @@ import keys
 import numpy as np
 import pandas as pd
 import warnings
-from preprocessing import Preprocessing
+from datapreparation import Datapreparation
 import matplotlib.pyplot as plt
 import time
 import scipy.optimize as optimize
 import scipy.interpolate as sci
+from helper import Helper
 import os
-
 
 warnings.filterwarnings("ignore")
 
+parsed_config = Helper.load_config('config.yml')
+N_STEPS_OUT = parsed_config['ml_options']['N_STEPS_OUT']
+NO_DATA = parsed_config['model_options']['NO_DATA']
 
 class Portfolio:
     def Accounting(crypto):
@@ -21,28 +24,35 @@ class Portfolio:
             balance = client.get_asset_balance(crypto)
             if float(balance['free']) > 0:
                 print('We are currently bull on: ' + crypto + ' . With a balance of: ' + balance['free'])
-            else:
-                print('We are bearish on:' + crypto + '  .With a balance of: ' + balance['free'])
             usdt_balance = client.get_asset_balance('USDT')
-            if float(balance['free']) > 0:
-                print('We are sitting on: ' + balance['free'] + ' USDT.')
+            if float(usdt_balance) > 0:
+                print('We are sitting on: ' + usdt_balance + ' USDT.')
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
-        return balance['free']
+        return balance['free'], usdt_balance
+
+    def Optimum_Accounting(assets, assets_weights, crypto):
+        try:
+            pass
+        except Exception as e:
+            print("An exception occurred - {}".format(e))
+            return False
+        return True
 
     def Return(dataset, coin):
         try:
-            dataframe = Preprocessing.Reshape_Float(dataset)
+            dataframe = pd.DataFrame(dataset)
+            dataframe = Datapreparation.Reshape_Float(dataframe)
             dataframe = pd.DataFrame(dataframe)
             # dataframe[coin['symbol']] = dataframe / dataframe.shift(1) - 1
             dataframe[coin['symbol']] = np.log(dataframe/dataframe.shift(1))
             dataframe.pop(0)
             dataframe = dataframe.drop(dataframe.index[0])
-            if len(dataframe) == 999:
+            if len(dataframe) == NO_DATA + N_STEPS_OUT - 1:
                 df = dataframe
-            elif len(dataframe) < 999:
-                shift = 999 - len(dataframe) + 1
+            elif len(dataframe) < NO_DATA + N_STEPS_OUT - 1:
+                shift = NO_DATA + N_STEPS_OUT - 1 - len(dataframe) + 1
                 df = pd.DataFrame(columns=[coin['symbol']], index=range(shift))
                 df = pd.concat([df, dataframe], ignore_index=True)
                 df[coin['symbol']] = df[coin['symbol']].fillna(0)
@@ -61,13 +71,15 @@ class Portfolio:
             for i in range(iterations):
                 weights = np.random.dirichlet(np.ones(num_assets), size=1)
                 weights = weights[0]
-                port_returns.append(np.sum(data_returns.mean() * weights) * 252)
-                port_vols.append(np.sqrt(np.dot(weights.T, np.dot(data_returns.cov() * 252, weights))))
-
+                # Anualize: 252
+                #port_returns.append(np.sum(data_returns.mean() * weights) * 252)
+                #port_vols.append(np.sqrt(np.dot(weights.T, np.dot(data_returns.cov() * 252, weights))))
+                # no Anualize
+                port_returns.append(np.sum(data_returns.mean() * weights))
+                port_vols.append(np.sqrt(np.dot(weights.T, np.dot(data_returns.cov(), weights))))
             # Convert lists to arrays
             port_returns = np.array(port_returns)
             port_vols = np.array(port_vols)
-
             # Plot the distribution of portfolio returns and volatilities
             plt.figure(figsize=(18, 10))
             plt.scatter(port_vols, port_returns, c=(port_returns / port_vols), marker='o')
@@ -91,8 +103,11 @@ class Portfolio:
             # Convert to array in case list was passed instead.
             weights = np.array(weights)
             # Anualize: 252
-            port_return = np.sum(df.mean() * weights) * 252
-            port_vol = np.sqrt(np.dot(weights.T, np.dot(df.cov() * 252, weights)))
+            #port_return = np.sum(df.mean() * weights)* 252
+            #port_vol = np.sqrt(np.dot(weights.T, np.dot(df.cov() * 252, weights)))
+            # no Anualize
+            port_return = np.sum(df.mean() * weights)
+            port_vol = np.sqrt(np.dot(weights.T, np.dot(df.cov(), weights)))
             sharpe = port_return / port_vol
         except Exception as e:
             print("An exception ocurred - {}".format(e))
@@ -138,9 +153,11 @@ class Portfolio:
                                                constraints=constraints)
             optimal_sharpe_weights = optimal_sharpe['x'].round(4)
             optimal_stats = Portfolio.port_stats(optimal_sharpe_weights, data_returns)
+            print('Optimal Sharpe Results:')
             print('Optimal Portfolio Return: ', round(optimal_stats['return'] * 100, 4))
             print('Optimal Portfolio Volatility: ', round(optimal_stats['volatility'] * 100, 4))
             print('Optimal Portfolio Sharpe Ratio: ', round(optimal_stats['sharpe'], 4))
+            print(list(zip(assets, list(optimal_sharpe_weights))))
         except Exception as e:
             print("An exception ocurred - {}".format(e))
             return False
@@ -161,9 +178,11 @@ class Portfolio:
                                                  constraints=constraints)
             optimal_variance_weights=optimal_variance['x'].round(4)
             optimal_stats = Portfolio.port_stats(optimal_variance_weights, data_returns)
+            print('Minimum Variance results:')
             print('Optimal Portfolio Return: ', round(optimal_stats['return'] * 100, 4))
             print('Optimal Portfolio Volatility: ', round(optimal_stats['volatility'] * 100, 4))
             print('Optimal Portfolio Sharpe Ratio: ', round(optimal_stats['sharpe'], 4))
+            print(list(zip(assets, list(optimal_variance_weights))))
         except Exception as e:
             print("An exception ocurred - {}".format(e))
             return False
@@ -181,7 +200,7 @@ class Portfolio:
             # Make an array of 50 returns between the minimum return and maximum return
             # discovered earlier.
             port_returns, port_vols = Portfolio.Simulations(data_returns)
-            target_returns = np.linspace(port_returns.min(), port_returns.max(), 50)
+            target_returns = np.linspace(port_returns.min(), port_returns.max(), 200) # 200 instead of 50
             for target_return in target_returns:
                 constraints = ({'type': 'eq', 'fun': lambda x: Portfolio.port_stats(x, data_returns)['return'] - target_return},
                                {'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
@@ -203,8 +222,8 @@ class Portfolio:
         try:
             port_returns, port_vols = Portfolio.Simulations(data_returns)
             minimal_volatilities, target_returns = Portfolio.Efficient_Frontier(data_returns)
-            print(minimal_volatilities)
-            print(target_returns)
+            #print(minimal_volatilities)
+            #print(target_returns)
             sharpe_results = Portfolio.Optimize_Sharpe(data_returns)
             assets1, optimal_sharpe_weights = list(zip(*sharpe_results))
             var_results = Portfolio. Optimize_Return(data_returns)
@@ -242,7 +261,7 @@ class Portfolio:
         except Exception as e:
             print("An exception ocurred - {}".format(e))
             return False
-        return True
+        return assets1, optimal_sharpe_weights, optimal_variance_weights
 
 #There is missing sintax below here
     def Capital_Market_Line(data_returns):

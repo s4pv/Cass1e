@@ -7,19 +7,17 @@ from sklearn import preprocessing
 import warnings
 from scalerparameters import ScalerParameters
 
-
 warnings.filterwarnings("ignore")
 
 parsed_config = Helper.load_config('config.yml')
 
-NO_DAYS = parsed_config['model_options']['NO_DAYS']
 TRAIN_SIZE = parsed_config['ml_options']['TRAIN_SIZE']
 N_FEATURES = parsed_config['ml_options']['N_FEATURES']
 N_STEPS_IN = parsed_config['ml_options']['N_STEPS_IN']
 N_STEPS_OUT = parsed_config['ml_options']['N_STEPS_OUT']
 
 
-class Preprocessing:
+class Datapreparation:
 
     def OHLCV_DataFrame(dataset):
         try:
@@ -74,9 +72,9 @@ class Preprocessing:
         try:
             # Convert an array of values into a dataset matrix
             # Load the dataset
-            print('Reshaping the data to float')
+            #print('Reshaping the data to float')
             data = dataset.values
-            print('setting float')
+            #print('setting float')
             data = data.astype('float32')
         except Exception as e:
             print("An exception occurred - {}".format(e))
@@ -85,7 +83,7 @@ class Preprocessing:
 
     def Minmax_Scaler(dataset, model, coin):
         try:
-            print('Starting to normalize the set with Min Max Scaler')
+            #print('Starting to normalize the set with Min Max Scaler')
             scaler = preprocessing.MinMaxScaler(feature_range=(0, 1))
             ds = scaler.fit_transform(dataset)
             ScalerParameters.Save(coin, scaler, 'MINMAXSCALER', model)
@@ -96,14 +94,14 @@ class Preprocessing:
 
     def Dataset_Split(dataset):
         try:
-            print('Splitting the dataset into training and test sets')
+            #print('Splitting the dataset into training and test sets')
             train_size = int(len(dataset) * TRAIN_SIZE)
-            print(train_size)
+            #print(train_size)
             test_size = len(dataset) - train_size
-            print(test_size)
+            #print(test_size)
             train, test = dataset[0:train_size,:], dataset[train_size:len(dataset),:]
-            print(train.shape)
-            print(test.shape)
+            #print(train.shape)
+            #print(test.shape)
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
@@ -115,15 +113,15 @@ class Preprocessing:
             ds_c = dataset['close']
             ds_ohlcv = pd.DataFrame(dataset)
             ds_ohlv = ds_ohlcv.drop(columns=['close'])
-            ds_f_ohlcv = Preprocessing.Reshape_Float(ds_ohlcv)
-            ds_f_ohlv = Preprocessing.Reshape_Float(ds_ohlv)
-            ds_f_c = Preprocessing.Reshape_Float(ds_c)
+            ds_f_ohlcv = Datapreparation.Reshape_Float(ds_ohlcv)
+            ds_f_ohlv = Datapreparation.Reshape_Float(ds_ohlv)
+            ds_f_c = Datapreparation.Reshape_Float(ds_c)
             # data to array
             ds_f_ohlcv = numpy.array(ds_f_ohlcv)
             ds_f_ohlv = numpy.array(ds_f_ohlv)
             ds_f_c = numpy.array(ds_f_c).reshape(-1, 1)
-            print(ds_f_ohlv.shape)
-            print(ds_f_c.shape)
+            #print(ds_f_ohlv.shape)
+            #print(ds_f_c.shape)
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
@@ -133,7 +131,7 @@ class Preprocessing:
     def Invert_Transform(ds, coin, modelname, method):
         try:
             # Invert predictions. Added variables for predictions
-            print('Inverting the scale back to normal')
+            #print('Inverting the scale back to normal')
             scaler = ScalerParameters.Load(coin, modelname, method)
             db = scaler.inverse_transform(ds)
         except Exception as e:

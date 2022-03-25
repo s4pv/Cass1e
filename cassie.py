@@ -13,11 +13,13 @@ from portfolio import Portfolio
 from trades import Trades
 from asianrange import AsianRange
 from helper import Helper
-from preprocessing import Preprocessing
+from datapreparation import Datapreparation
 from machinelearning import MachineLearning
 from modelforecast import ModelForecast
+from tradesignals import Tradesignals
 from stats import Stats
 import pandas as pd
+import numpy
 
 warnings.filterwarnings("ignore")
 
@@ -31,14 +33,12 @@ class Cassie:
     # Configuration and class variables
     parsed_config = Helper.load_config('config.yml')
 
-    LOG_TRADES = parsed_config['script_options'].get('LOG_TRADES')
-    LOG_FILE = parsed_config['script_options'].get('LOG_FILE')
-
-    NO_DAYS = parsed_config['model_options']['NO_DAYS']
+    NO_DATA = parsed_config['model_options']['NO_DATA']
 
     PAIR_WITH = parsed_config['trading_options']['PAIR_WITH']
     TICKERS_LIST = parsed_config['trading_options']['TICKERS_LIST']
-    TIMEFRAME = parsed_config['trading_options']['TIMEFRAME']
+    WORK_TIMEFRAME = parsed_config['trading_options']['WORK_TIMEFRAME']
+    TRAIN_TIMEFRAME = parsed_config['trading_options']['TRAIN_TIMEFRAME']
 
     tickers = [line.strip() for line in open(TICKERS_LIST)]
 
@@ -75,52 +75,57 @@ def main():
     for coin in cassie.client.get_all_tickers():
         for crypto in cassie.tickers:
             if crypto + cassie.PAIR_WITH == coin['symbol']:
-                # Forcing closing and deleting orders at the end of the new york season. 18 hours localtime.
-                dataset = cassie.client.get_klines(symbol=coin['symbol'], interval=cassie.TIMEFRAME,
-                                                   limit=cassie.NO_DAYS)
-                dataset_ohlcv = Preprocessing.OHLCV_DataFrame(dataset)
-                returns = Portfolio.Return(dataset_ohlcv['close'], coin)
-                data_returns[coin['symbol']] = returns[coin['symbol']]
 
-                if coin['symbol'] == 'BTCUSDT':
+                # Daily closure: 21 hours. Time to forecast. If monday, also time to fit again the model.
+                if True:#str(cassie.local_aware.hour) == 21 and cassie.local_aware.minute == 5:
+                    if coin['symbol'] == 'BTCUSDT':
+                        if cassie.local_aware.day == 'MONDAY':
+                            print('Today is monday. Heaviest day of the week...')
+                            print('We have to fit models again to forecast BTCUSDT.')
+                            print('Extracting pricing data from the server to model...')
+                            dataset = cassie.client.get_klines(symbol=coin['symbol'], interval=cassie.TRAIN_TIMEFRAME,
+                                                               limit=cassie.NO_DATA)
+                            dataframe = Datapreparation.OHLCV_DataFrame(dataset)
+                            #Stats.Shapiro_Wilk(dataframe)
+                            print('Fitting the model to the new data')
+                            print('This may take a while...')
+                            MachineLearning.LSTM(dataframe, coin)
+                            print('Model fitted. Results and plots can be seen on respective folders.')
+                    print('Extracting pricing data from the server to forecast the coin: ' + coin['symbol'])
+                    dataset = cassie.client.get_klines(symbol=coin['symbol'], interval=cassie.WORK_TIMEFRAME,
+                                                       limit=cassie.NO_DATA)
+                    dataset_ohlcv = Datapreparation.OHLCV_DataFrame(dataset)
+                    print('Making forecasts!. Plots can be seen on respective folders.')
+                    forecast = ModelForecast.Predict_LSTM(dataset_ohlcv, coin)
+                    # with 1000 days of memory for portfolio optimization
+                    #ds_forecast = numpy.append(dataset_ohlcv['close'], forecast[0], 0)
+                    # without memory
+                    ds_forecast = forecast[0]
+                    returns = Portfolio.Return(ds_forecast, coin)
+                    data_returns[coin['symbol']] = returns[coin['symbol']]
+                    #print(data_returns[coin['symbol']])
+                    #print(data_returns[coin['symbol']].shape)
 
-                    #if cassie.local_aware.day == 'MONDAY': #??
-                        print('Today is monday. Heaviest day of the week...')
-                        print('We have to fit models again, and choose the better to model BTCUSDT.')
-                        print('Extracting pricing data from the server...')
-                        #dataset = cassie.client.get_klines(symbol=coin['symbol'], interval=cassie.TIMEFRAME,
-                        #                                   limit=cassie.NO_DAYS)
-                        #dataframe = DataProcessing.OHLCV_DataFrame(dataset)
-
-                        #print(dataframe)
-
-                        print('Running, fitting and comparing all the models. Saving the best data.')
-                        #Stats.Shapiro_Wilk(dataset_ohlcv)
-                        #MachineLearning.LSTM(dataset_ohlcv, coin)
-                        ModelForecast.Predict_LSTM(dataset_ohlcv, coin)
-                        print('This may take a while...')
-                        print('Model chosen!!. So now, we have to fit the data for all the coins in the ticker list.')
-                        print('Loading the model on the coin: ' + coin['symbol'])
-                        #dataframe[coin['symbol']] = Portfolio.Data(dataframe, coin)
-
-                #print(dataset)
-                print('Making a minimum variance portfolio with the forecasted returns.')
-                print('So we have to allocate the following ammounts per coin. Cass1e will be trading beetween those ammounts.')
-                #print(dataframe)
-                print('Compiling the model')
-                print('Making forecasts!')
-                print('Plotting... ')
-
+                # Forcing Portfolio rebalance and Deleting orders at the end of the new york season. 18 hours localtime.
                 if str(cassie.local_aware.hour) == cassie.new_york_close and cassie.local_aware.minute == 0:
-                    print('We ended the new york trading hours. CHecking for additional portfolio re-balancing.')
+                    print('We ended the new york trading hours. Checking for additional portfolio re-balancing.')
                     print('Checking the crypto: ' + coin['symbol'])
-                    print('Starting rebalance')
+                    print('Deleting pending Orders')
+                    Trades.Delete_Order(coin['symbol'])
+                    Trades.MarketBuy(coin['symbol'])
+                    Trades.MarketSell(coin['symbol'])
 
                 # Entering the ending hours of the NY time from 13 to 18 hours localtime. Time to collect the profit!.
                 if cassie.london_close < int(cassie.local_aware.hour) <= cassie.new_york_close:
                     print('We entered the ending hours of the NY timezone. Time for take profit!')
                     print('Checking the balance on the crypto: ' + crypto)
                     print('Trying to take profit')
+                    #if Portfolio.Optimum_Accounting(assets, optimal_variance_weights, coin['symbol']) < Portfolio.Accounting(coin['symbol']):
+                    #    print('Forcing long on the crypto pair:' + coin['symbol'])
+                    #    Trades.LimitBuy(coin['symbol'])
+                    #if Portfolio.Optimum_Accounting(assets, optimal_variance_weights, coin['symbol']) > Portfolio.Accounting(coin['symbol']):
+                    #    print('Sell signal found, trying to go short on the crypto pair:' + coin['symbol'])
+                    #    Trades.LimitSell(coin['symbol'])
 
                 # End of the working season, london time: 13 hours. Time to stop working!
                 if int(cassie.local_aware.hour) == cassie.london_close and cassie.local_aware.minute == 0:
@@ -129,33 +134,43 @@ def main():
                 # Entering the first hours of the frankfurt/london timezone from 4 to 13 hours. Time to open some.
                 if cassie.frankfurt_open < int(cassie.local_aware.hour) < cassie.london_close:
                     print('We entered the trading hours. That means the frankfurt/london timezone.')
-                    print('looking to enter the market.')
-                    print('Checking the crypto: ' + coin['symbol'])
-                    print('Price under the asian range. Looking for long signaling.')
+                    print('looking forward to rebalance the portfolio.')
+                    print('Checking entries for the crypto: ' + coin['symbol'])
+                    dataset = cassie.client.get_klines(symbol=coin['symbol'], interval=cassie.WORK_TIMEFRAME,
+                                                       limit=cassie.NO_DATA)
+                    dataframe = Datapreparation.OHLCV_DataFrame(dataset)
+                    if Portfolio.Optimum_Accounting(assets, optimal_variance_weights, coin['symbol']) < Portfolio.Accounting(coin['symbol']):
+                        if dataset[0]['price'] < lower_limit:
+                            print('Price under the asian range. Looking for long signaling.')
+                            buy_sign = Tradesignals.Looking_Long(coin['symbol'], dataframe)
+                            if buy_sign == True:
+                                print('Bull signal found, trying to go long on the crypto pair:' + coin['symbol'])
+                                Trades.LimitBuy(coin['symbol'])
+                                buy_sign = False
+                    if Portfolio.Optimum_Accounting(assets, optimal_variance_weights, coin['symbol']) > Portfolio.Accounting(coin['symbol']):
+                        if dataset[0]['price'] > upper_limit:
+                            print('Price above the asian range. Looking for short signaling.')
+                            sell_sign = Tradesignals.Looking_Short(coin['symbol'], dataframe)
+                            if sell_sign == True:
+                                print('Sell signal found, trying to go short on the crypto pair:' + coin['symbol'])
+                                Trades.LimitSell(coin['symbol'])
+                                sell_sign = False
 
                 # First hour of the day: 4 hours. Time to calculate the asian range and start working!.
                 if str(cassie.local_aware.hour) == cassie.frankfurt_open and cassie.local_aware.minute == 0:
                     print('First hour of the day. Time to calculate the asian range and start working!')
                     print('Checking the crypto: ' + coin['symbol'])
-
-                    dataset = cassie.client.get_klines(symbol=coin['symbol'], interval=cassie.TIMEFRAME,
-                                                       limit=cassie.NO_DAYS)
-                    dataframe = Preprocessing.OHLCV_DataFrame(dataset)
+                    dataset = cassie.client.get_klines(symbol=coin['symbol'], interval=cassie.WORK_TIMEFRAME,
+                                                       limit=cassie.NO_DATA)
+                    dataframe = Datapreparation.OHLCV_DataFrame(dataset)
                     upper_limit, lower_limit = AsianRange.update(coin['symbol'], dataframe)
-    #print(data_returns)
-    #port_returns, port_vols = Portfolio.Simulations(data_returns)
-    #Portfolio.Efficient_Frontier(data_returns)
-    #Portfolio.Plot(data_returns)
-    #print(portfolio_alloc)
-    #port_return, port_vols, sharpe = Portfolio.Stats(weights, data_returns)
-    #optimal_sharpe_weights = Portfolio.Optimize_Sharpe(data_returns)
-    #print(optimal_sharpe_weights)
-    #optimal_variance_weights = Portfolio.Optimize_Return(data_returns)
-    #print(optimal_variance_weights)
-    #minimal_volatilities, target_returns = Portfolio.Efficient_Frontier(data_returns, port_returns)
-    #Portfolio.Plot(port_returns, port_vols, optimal_sharpe_weights, optimal_variance_weights,
-    #                             minimal_volatilities, target_returns)
+
+                #fix tabulations (1 less)
+                #print(data_returns)
+                assets, optimal_sharpe_weights, optimal_variance_weights = Portfolio.Plot(data_returns)
+                Portfolio.Optimum_Accounting(assets, optimal_variance_weights, coin['symbol'])
 
 
-if __name__ == "__main__":
-    main()
+while True:
+    if __name__ == "__main__":
+        main()

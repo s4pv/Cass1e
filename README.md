@@ -15,6 +15,6 @@ if required/wanted.
 5. With the forecast, the bot can trade and optimize portfolios.
 
 # Further steps
-1. autoML
-2. CLI
-3. Telegram API
+1. Update data on already fitted model
+2. A better model: autoML or stacked lstm + N_STEPS_IN > 1
+3. CLI  or interface Telegram API

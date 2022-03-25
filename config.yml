@@ -3,9 +3,9 @@ script_options:
   LOG_TRADES: True
   LOG_FILE: 'trades.txt'
 
-# Data extraction parameters for modeling
+# Data extraction parameters for modeling (max = 1000)
 model_options:
-  NO_DAYS: 1000
+  NO_DATA: 1000
 
 # These parameters apply for the modern machine learning models
 ml_options:
@@ -14,7 +14,7 @@ ml_options:
   DROPOUT: 0.15
   N_STEPS_IN: 1
   N_STEPS_OUT: 32
-  EPOCH: 1
+  EPOCH: 1000
   N_FEATURES: 4
   VERBOSE: 2
 
@@ -23,6 +23,7 @@ trading_options:
   # select your base currency to use for trading (trade for example USDT pairs)
   PAIR_WITH: USDT
   # trading timeframe
-  TIMEFRAME: 1d
+  WORK_TIMEFRAME: 1h
+  TRAIN_TIMEFRAME: 1d
   # Name of custom tickers list
   TICKERS_LIST: 'tickers.txt'

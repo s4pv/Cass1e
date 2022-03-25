@@ -7,7 +7,7 @@ class ModelParameters:
         try:
 
             # Save the model to disk with YAML
-            print('Saving the model to the disk')
+            #print('Saving the model to the disk')
             filename = os.path.join('C:/Users/pablo/PycharmProjects/Cass1e/model_parameters',
                                     str(coin['symbol']) + '_model_' + str(modelname) + '.json')
             model_json = model.to_json()
@@ -17,7 +17,7 @@ class ModelParameters:
             filename2 = os.path.join('C:/Users/pablo/PycharmProjects/Cass1e/model_parameters',
                                str(coin['symbol']) + '_model_' + str(modelname) + '.h5')
             model.save_weights(filename2)
-            print("Saved model to disk")
+            #print("Saved model to disk")
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
@@ -27,16 +27,16 @@ class ModelParameters:
         try:
             # Load the model and scaler from disk
             filename = os.path.join('C:/Users/pablo/PycharmProjects/Cass1e/model_parameters',
-                                    str(coin['symbol']) + '_model_' + str(modelname) + '.json')
+                                    str(coin) + '_model_' + str(modelname) + '.json')
             json_file = open(filename, 'r')
             loaded_model_json = json_file.read()
             json_file.close()
             model = model_from_json(loaded_model_json)
             # Load weights into new model
             filename2 = os.path.join('C:/Users/pablo/PycharmProjects/Cass1e/model_parameters',
-                               str(coin['symbol']) + '_model_' + str(modelname) + '.h5')
+                               str(coin) + '_model_' + str(modelname) + '.h5')
             model.load_weights(filename2)
-            print("Loaded model from disk")
+            #print("Loaded model from disk")
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False

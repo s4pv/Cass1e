@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy
-import pandas as pd
 import warnings
 import os
 from helper import Helper
@@ -19,16 +18,16 @@ class ModelPlot:
             # shift train predictions for plotting
             trainPredictPlot = numpy.empty_like(ds)
             trainPredictPlot[:, :] = numpy.nan
-            print(trainPredict.shape)
+            #print(trainPredict.shape)
             trainPredict = numpy.reshape(trainPredict, (N_STEPS_OUT, 1))
-            print(trainPredict.shape)
+            #print(trainPredict.shape)
             trainPredictPlot[N_STEPS_IN + trainLen -1:len(trainPredict) + N_STEPS_IN + trainLen -1, :] = trainPredict
             # shift test predictions for plotting
             testPredictPlot = numpy.empty_like(ds)
             testPredictPlot[:, :] = numpy.nan
-            print(testPredict.shape)
+            #print(testPredict.shape)
             testPredict = numpy.reshape(testPredict, (N_STEPS_OUT, 1))
-            print(testPredict.shape)
+            #print(testPredict.shape)
             testPredictPlot[len(ds) - 1 - N_STEPS_OUT:len(ds) - 1, :] = testPredict
         except Exception as e:
             print("An exception occurred - {}".format(e))
@@ -40,27 +39,27 @@ class ModelPlot:
             # shift forecast predictions for plotting
             forecastPlot = numpy.empty_like(close)
             to_append = numpy.array([[0]])
-            print(forecastPlot.shape)
+            #print(forecastPlot.shape)
             for x in range(N_STEPS_OUT):
                 forecastPlot = numpy.append(forecastPlot, to_append, 0)
             forecastPlot[:, :] = numpy.nan
-            print(forecastPlot.shape)
-            print(N_STEPS_IN + len(forecastPlot) - 1 - N_STEPS_OUT)
-            print(N_STEPS_IN + len(forecastPlot) - 1)
-            print(forecast.shape)
+            #print(forecastPlot.shape)
+            #print(N_STEPS_IN + len(forecastPlot) - 1 - N_STEPS_OUT)
+            #print(N_STEPS_IN + len(forecastPlot) - 1)
+            #print(forecast.shape)
             forecast = numpy.reshape(forecast, (N_STEPS_OUT, 1))
-            print(forecast.shape)
+            #print(forecast.shape)
             forecastPlot[N_STEPS_IN + len(forecastPlot) - 1 - N_STEPS_OUT:N_STEPS_IN + len(forecastPlot) - 1, :] = forecast
             # expand close predictions for plotting
             closePlot = numpy.empty_like(close)
             to_append = numpy.array([[0]])
-            print(closePlot.shape)
+            #print(closePlot.shape)
             for x in range(N_STEPS_OUT):
                 closePlot = numpy.append(closePlot, to_append, 0)
             closePlot[:, :] = numpy.nan
-            print(closePlot.shape)
-            print(len(closePlot) + N_STEPS_IN - N_STEPS_OUT - 1)
-            print(close.shape)
+            #print(closePlot.shape)
+            #print(len(closePlot) + N_STEPS_IN - N_STEPS_OUT - 1)
+            #print(close.shape)
             closePlot[N_STEPS_IN:len(closePlot) + N_STEPS_IN - N_STEPS_OUT, :] = close
         except Exception as e:
             print("An exception occurred - {}".format(e))
@@ -104,7 +103,7 @@ class ModelPlot:
             plt.grid(color='k', linestyle='dotted', linewidth=1)
             #plt.show()
             filename = os.path.join('C:/Users/pablo/PycharmProjects/Cass1e/model_forecasts_plots',
-                                    str(coin['symbol']) + '_forecast_model_' + str(modelname) + '2.png')
+                                    str(coin['symbol']) + '_forecast_model_' + str(modelname) + '.png')
             plt.savefig(filename)
             plt.close()
         except Exception as e:
