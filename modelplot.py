@@ -13,26 +13,34 @@ N_STEPS_IN = parsed_config['ml_options']['N_STEPS_IN']
 N_STEPS_OUT = parsed_config['ml_options']['N_STEPS_OUT']
 
 class ModelPlot:
-    def Shift_Plot(ds, trainLen, trainPredict, testPredict):
+    def Shift_Plot(ds, trainLen, train, test):
         try:
             # shift train predictions for plotting
-            trainPredictPlot = numpy.empty_like(ds)
-            trainPredictPlot[:, :] = numpy.nan
-            #print(trainPredict.shape)
-            trainPredict = numpy.reshape(trainPredict, (N_STEPS_OUT, 1))
-            #print(trainPredict.shape)
-            trainPredictPlot[N_STEPS_IN + trainLen -1:len(trainPredict) + N_STEPS_IN + trainLen -1, :] = trainPredict
+            trainPlot = numpy.empty_like(ds)
+            trainPlot[:, :] = numpy.nan
+            #print(train.shape)
+            train = numpy.reshape(train, (N_STEPS_OUT, 1))
+            #print(train.shape)
+            trainPlot[N_STEPS_IN + trainLen -1:len(train) + N_STEPS_IN + trainLen -1, :] = train
             # shift test predictions for plotting
-            testPredictPlot = numpy.empty_like(ds)
-            testPredictPlot[:, :] = numpy.nan
-            #print(testPredict.shape)
-            testPredict = numpy.reshape(testPredict, (N_STEPS_OUT, 1))
-            #print(testPredict.shape)
-            testPredictPlot[len(ds) - 1 - N_STEPS_OUT:len(ds) - 1, :] = testPredict
+            testPlot = numpy.empty_like(ds)
+            testPlot[:, :] = numpy.nan
+            #print(test.shape)
+            testPredict = numpy.reshape(test, (N_STEPS_OUT, 1))
+            #print(test.shape)
+            testPlot[len(ds) - 1 - N_STEPS_OUT:len(ds) - 1, :] = test
+            # close for plotting
+            closePlot = numpy.empty_like(ds)
+            #print(closePlot.shape)
+            closePlot[:, :] = numpy.nan
+            #print(closePlot.shape)
+            #print(len(closePlot) + N_STEPS_IN - N_STEPS_OUT - 1)
+            #print(close.shape)
+            closePlot[:len(closePlot), :] = ds
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
-        return trainPredictPlot, testPredictPlot
+        return trainPlot, testPlot, closePlot
 
     def Shift_Forecast_Plot(close, forecast):
         try:

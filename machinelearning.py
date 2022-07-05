@@ -7,13 +7,14 @@ from keras.layers import Bidirectional
 import math
 import warnings
 from sklearn.metrics import mean_squared_error
-from helper import Helper
-
 import numpy
 
+from helper import Helper
 from datapreparation import Datapreparation
 from modelplot import ModelPlot
 from modelparameters import ModelParameters
+from stats import Stats
+import pandas as pd
 
 warnings.filterwarnings("ignore")
 
@@ -29,22 +30,44 @@ EPOCH = parsed_config['ml_options']['EPOCH']
 N_FEATURES = parsed_config['ml_options']['N_FEATURES']
 VERBOSE = parsed_config['ml_options']['VERBOSE']
 
+ML_MODEL = parsed_config['model_options']['ML_MODEL']
+WEIGHT = parsed_config['model_options']['WEIGHT']
 
 class MachineLearning:
     def LSTM(dataset, coin):
         try:
+            print('Transforming the data to returns to make the data stationary')
+            #return_dataset = Datapreparation.Returns_Transformation(dataset)
+            return_dataset = Datapreparation.Fractional_Differentiation(dataset, WEIGHT)
+            aux_c, aux_ohlv, aux_ohlcv = Datapreparation.Prepare_Data(dataset)
+            aux_train, aux_test = Datapreparation.Dataset_Split(aux_ohlcv)
+            print('Testing if the data is stationary on close data')
+            statsDF, pDF = Stats.Dickey_Fuller(return_dataset['close'])
             # preprocessing data
-            ds_f_c, ds_f_ohlv, ds_f_ohlcv = Datapreparation.Prepare_Data(dataset)
+            r_c, r_ohlv, r_ohlcv = Datapreparation.Prepare_Data(return_dataset)
             # scaling data
-            ohlcv_scaled = Datapreparation.Minmax_Scaler(ds_f_ohlcv, 'OHLCV_LSTM', coin)
-            ohlv_scaled = Datapreparation.Minmax_Scaler(ds_f_ohlv, 'OHLV_LSTM', coin)
-            c_scaled = Datapreparation.Minmax_Scaler(ds_f_c, 'C_LSTM', coin)
+            print('Starting to normalize the set with the quantile gaussian transformation (robust to outliers)')
+            r_ohlcv_scaled = Datapreparation.Gaussian_Scaler(r_ohlcv, 'OHLCV_LSTM', coin)
+            #r_ohlcv_scaled = Datapreparation.PowerTransformer(r_ohlcv, 'OHLV_LSTM', coin)
+            r_ohlv_scaled = Datapreparation.Gaussian_Scaler(r_ohlv, 'OHLV_LSTM', coin)
+            #r_ohlv_scaled = Datapreparation.PowerTransformer(r_ohlv, 'OHLV_LSTM', coin)
+            r_c_scaled = Datapreparation.Gaussian_Scaler(r_c, 'C_LSTM', coin)
+            #r_c_scaled = Datapreparation.PowerTransformer(r_c, 'C_LSTM', coin)
             #print(ohlcv_scaled.shape)
             #print(ohlv_scaled.shape)
             #print(c_scaled.shape)
-            # Prediction Index
-            train, test = Datapreparation.Dataset_Split(ohlcv_scaled)
-            # for multivariate multi step predict purposes
+            # reshaping data
+            r_c_scaled = pd.DataFrame(r_c_scaled)
+            r_c_scaled.columns = ['close']
+            # plot histogram probplot and qplot
+            print('Starting to plot histogram, PPplot and QQplot on close data')
+            Stats.Plots(r_c_scaled['close'])
+            # testing for normality
+            print('Testing for normality on close data sets.')
+            statsSWC, pSWC = Stats.Shapiro_Wilk(r_c_scaled['close'])
+            # Split sequences
+            train, test = Datapreparation.Dataset_Split(r_ohlcv_scaled)
+            # train and test split
             trainX, trainY = Datapreparation.Split_Sequences(train, N_STEPS_IN, N_STEPS_OUT)
             testX, testY = Datapreparation.Split_Sequences(test, N_STEPS_IN, N_STEPS_OUT)
             #print(trainX.shape, trainY.shape)
@@ -57,11 +80,11 @@ class MachineLearning:
             #n_neurons = trainX.shape[1] * trainX.shape[2]
             #print('Recommended neurons are')
             #print(n_neurons)
-            # not stacked multi variable LSTM bidirectional multi step output
-            lstm.add(Bidirectional(LSTM(NEURONS, input_shape=(N_STEPS_IN, N_FEATURES), return_sequences=True)))
+            # Not stacked multi variable LSTM not-bidirectional multi step output
+            lstm.add(LSTM(NEURONS, input_shape=(N_STEPS_IN, N_FEATURES), return_sequences=True))
             # Stacked multi variable LSTM bidirectional multi step output
-            #lstm.add(Bidirectional(LSTM(n_neurons, batch_input_shape=(N_STEPS_IN, N_STEPS_OUT, N_FEATURES), stateful=True, return_sequences=True)))
-            #lstm.add(Bidirectional(LSTM(n_neurons, batch_input_shape=(N_STEPS_IN, N_STEPS_OUT, N_FEATURES), stateful=True)))
+            #lstm.add(Bidirectional(LSTM(NEURONS, batch_input_shape=(N_STEPS_IN, N_STEPS_OUT, N_FEATURES), stateful=True, return_sequences=True)))
+            #lstm.add(Bidirectional(LSTM(NEURONS, batch_input_shape=(N_STEPS_IN, N_STEPS_OUT, N_FEATURES), stateful=True)))
             lstm.add(Dense(N_STEPS_OUT))
             lstm.add(Dropout(DROPOUT))
             lstm.compile(loss='mean_squared_error', optimizer='adam')
@@ -81,56 +104,103 @@ class MachineLearning:
             #print(testPredict.shape)
             # evaluate loaded model
             lstm.evaluate(trainX, trainY, batch_size=N_STEPS_IN, verbose=VERBOSE)
-            # reshape sets (only for not stacked LSTM)
+            # reshape sets
+            trainPredict = trainPredict[len(trainPredict)-1].reshape(N_STEPS_OUT, -1)
+            testPredict = testPredict[len(testPredict)-1].reshape(N_STEPS_OUT, -1)
             trainX = numpy.reshape(trainX, (-1, N_FEATURES))
             testX = numpy.reshape(testX, (-1, N_FEATURES))
-            trainY = numpy.reshape(trainY, (-1, N_STEPS_OUT))
-            testY = numpy.reshape(testY, (-1, N_STEPS_OUT))
-            trainPredict = trainPredict[len(trainPredict)-1]
-            testPredict = testPredict[len(trainPredict)-1]
+            trainY = trainY[len(trainY)-1].reshape(N_STEPS_OUT, -1)
+            testY = testY[len(testY)-1].reshape(N_STEPS_OUT, -1)
             # invert sets
-            trainPredict = Datapreparation.Invert_Transform(trainPredict, coin, 'C_LSTM', 'MINMAXSCALER')
-            testPredict = Datapreparation.Invert_Transform(testPredict, coin, 'C_LSTM', 'MINMAXSCALER')
-            trainX = Datapreparation.Invert_Transform(trainX, coin, 'OHLV_LSTM', 'MINMAXSCALER')
-            testX = Datapreparation.Invert_Transform(testX, coin, 'OHLV_LSTM', 'MINMAXSCALER')
-            trainY = Datapreparation.Invert_Transform(trainY, coin, 'C_LSTM', 'MINMAXSCALER')
-            testY = Datapreparation.Invert_Transform(testY, coin, 'C_LSTM', 'MINMAXSCALER')
-            ds_f_ohlcv = Datapreparation.Invert_Transform(ohlcv_scaled, coin, 'OHLCV_LSTM', 'MINMAXSCALER')
-            ds_f_ohlv = Datapreparation.Invert_Transform(ohlv_scaled, coin, 'OHLV_LSTM', 'MINMAXSCALER')
-            ds_f_c = Datapreparation.Invert_Transform(c_scaled, coin, 'C_LSTM', 'MINMAXSCALER')
+            trainPredict_unscaled = Datapreparation.Invert_Transform(trainPredict, coin, 'C_LSTM', 'GAUSSIANSCALER')
+            testPredict_unscaled = Datapreparation.Invert_Transform(testPredict, coin, 'C_LSTM', 'GAUSSIANSCALER')
+            trainX_unscaled = Datapreparation.Invert_Transform(trainX, coin, 'OHLV_LSTM', 'GAUSSIANSCALER')
+            testX_unscaled = Datapreparation.Invert_Transform(testX, coin, 'OHLV_LSTM', 'GAUSSIANSCALER')
+            trainY_unscaled = Datapreparation.Invert_Transform(trainY, coin, 'C_LSTM', 'GAUSSIANSCALER')
+            testY_unscaled = Datapreparation.Invert_Transform(testY, coin, 'C_LSTM', 'GAUSSIANSCALER')
+            r_ohlcv_unscaled = Datapreparation.Invert_Transform(r_ohlcv_scaled, coin, 'OHLCV_LSTM', 'GAUSSIANSCALER')
+            r_ohlv_unscaled = Datapreparation.Invert_Transform(r_ohlv_scaled, coin, 'OHLV_LSTM', 'GAUSSIANSCALER')
+            r_c_unscaled = Datapreparation.Invert_Transform(r_c_scaled, coin, 'C_LSTM', 'GAUSSIANSCALER')
             # printing shapes
-            #print(trainPredict.shape)
-            #print(testPredict.shape)
-            #print(trainX.shape)
-            #print(testX.shape)
-            #print(trainY.shape)
-            #print(testY.shape)
-            # reshape for not staked
-            testPredict.reshape(-1, N_STEPS_OUT)
-            trainPredict.reshape(-1, N_STEPS_OUT)
-            testY = testY[len(testY)-1].reshape(-1, N_STEPS_OUT)
-            trainY = trainY[len(trainY)-1].reshape(-1, N_STEPS_OUT)
+            #print(trainPredict_unscaled.shape)
+            #print(testPredict_unscaled.shape)
+            #print(trainX_unscaled.shape)
+            #print(testX_unscaled.shape)
+            #print(trainY_unscaled.shape)
+            #print(testY_unscaled.shape)
+            #print(r_ohlcv_unscaled.shape)
+            #print(r_ohlv_unscaled.shape)
+            #print(r_c_unscaled.shape)
+            # convert back from returns to price
+            #p_trainPredict_u = Datapreparation.Price_Transformation(trainPredict_unscaled, aux_train, 'model')
+            #p_testPredict_u = Datapreparation.Price_Transformation(testPredict_unscaled, aux_test, 'model')
+            #p_trainX_u = Datapreparation.Price_Transformation(trainX_unscaled, dataset, 'model')
+            #p_testX_u = Datapreparation.Price_Transformation(testX_unscaled, dataset, 'model')
+            #p_trainY_u = Datapreparation.Price_Transformation(trainY_unscaled, aux_train, 'model')
+            #p_testY_u = Datapreparation.Price_Transformation(testY_unscaled, aux_test, 'model')
+            #p_ohlcv_u = Datapreparation.Price_Transformation(r_ohlcv_unscaled, dataset, 'model')
+            #p_ohlv_u = Datapreparation.Price_Transformation(r_ohlv_unscaled, dataset, 'model')
+            #p_c_u = Datapreparation.Price_Transformation(r_c_unscaled, dataset, 'model')
+            # convert back from fractional differentiation to price
+            p_trainPredict_u = Datapreparation.Fractional_Integration(trainPredict_unscaled, aux_train, WEIGHT, 'model')
+            p_testPredict_u = Datapreparation.Fractional_Integration(testPredict_unscaled, aux_test, WEIGHT, 'model')
+            #p_trainX_u = Datapreparation.Fractional_Integration(trainX_unscaled, dataset, WEIGHT, 'model')
+            #p_testX_u = Datapreparation.Fractional_Integration(testX_unscaled, dataset, WEIGHT, 'model')
+            p_trainY_u = Datapreparation.Fractional_Integration(trainY_unscaled, aux_train, WEIGHT, 'model')
+            p_testY_u = Datapreparation.Fractional_Integration(testY_unscaled, aux_test, WEIGHT, 'model')
+            #p_ohlcv_u = Datapreparation.Fractional_Integration(r_ohlcv_unscaled, dataset, WEIGHT, 'model')
+            #p_ohlv_u = Datapreparation.Fractional_Integration(r_ohlv_unscaled, dataset, WEIGHT, 'model')
+            p_c_u = Datapreparation.Fractional_Integration(r_c_unscaled, dataset, WEIGHT, 'model')
+            #reshape data for comparing agains correct close data
+            #print(p_trainPredict_u.shape)
+            #print(p_testPredict_u.shape)
+            #print(p_trainX_u.shape)
+            #print(p_testX_u.shape)
+            #print(p_trainY_u.shape)
+            #print(p_testY_u.shape)
+            #print(p_ohlcv_u.shape)
+            #print(p_ohlv_u.shape)
+            #print(p_c_u.shape)
+            # Train Metrics
+            trainScore = math.sqrt(mean_squared_error(p_trainY_u, p_trainPredict_u))
+            print('Train Score: %.2f RMSE' % (trainScore))
+            testScore = math.sqrt(mean_squared_error(p_testY_u, p_testPredict_u))
+            print('Test Score: %.2f RMSE' % (testScore))
             # Estimate model performance
+            #aux for stats
+            aux_testY = numpy.squeeze(numpy.asarray(p_testY_u))
+            aux_testPredict = numpy.squeeze(numpy.asarray(p_testPredict_u))
+            # Spearman (R2) just for parametric/normally distributed data
+            #Stats.Spearman(aux_testY, aux_testPredict)
+            # Pearson test (R2) for non-parametric/not normally distributed data
+            Stats.Pearson(aux_testY, aux_testPredict)
+            # Kendall test
+            #Stats.Kendall(aux_testY, aux_testPredict)
+            # Chi Squared test (Xi2) for non-parametric/not normally distributed data
+            Stats.Chi_Squared(aux_testY, aux_testPredict)
             # Mean Absolute Error (MAE)
-            MAE = mean_squared_error(testY, testPredict)
+            MAE = mean_squared_error(p_testY_u, p_testPredict_u)
             print(f'Median Absolute Error (MAE): {numpy.round(MAE, 2)}')
             # Mean Absolute Percentage Error (MAPE)
-            MAPE = numpy.mean((numpy.abs(numpy.subtract(testY, testPredict) / testY))) * 100
-            print(f'Mean Absolute Percentage Error (MAPE): {numpy.round(MAPE, 2)} %')
+            MAPE = numpy.mean((numpy.abs(numpy.subtract(p_testY_u, p_testPredict_u) / p_testY_u))) * 100
+            print(f'Mean Absolute Percentage Error (MAPE): {numpy.round(MAPE[0], 2)} %')
             # Median Absolute Percentage Error (MDAPE)
-            MDAPE = numpy.median((numpy.abs(numpy.subtract(testY, testPredict) / testY))) * 100
+            MDAPE = numpy.median((numpy.abs(numpy.subtract(p_testY_u, p_testPredict_u) / p_testY_u))) * 100
             print(f'Median Absolute Percentage Error (MDAPE): {numpy.round(MDAPE, 2)} %')
-            trainScore = math.sqrt(mean_squared_error(trainY, trainPredict))
-            print('Train Score: %.2f RMSE' % (trainScore))
-            testScore = math.sqrt(mean_squared_error(testY, testPredict))
-            print('Test Score: %.2f RMSE' % (testScore))
+            # reshape dataset to plot correctly close data
+            p_c_unscaled_2 = dataset['close'].to_numpy()
+            p_c_unscaled_2 = numpy.reshape(p_c_unscaled_2, (len(p_c_unscaled_2), 1))
+            p_c_unscaled_2 = numpy.delete(p_c_unscaled_2, 0, 0)
+            p_c_unscaled_2 = pd.DataFrame(p_c_unscaled_2)
+            p_c_unscaled_2 = Datapreparation.Reshape_Float(p_c_unscaled_2)
             # shift train predictions for plotting
-            trainPredictPlot, testPredictPlot = ModelPlot.Shift_Plot(ds_f_c, len(trainX), trainPredict, testPredict)
-            trainYPlot, testYPlot = ModelPlot.Shift_Plot(ds_f_c, len(trainX), trainY, testY)
+            trainPredictPlot, testPredictPlot, closePlot1 = ModelPlot.Shift_Plot(p_c_unscaled_2, len(trainX_unscaled), p_trainPredict_u, p_testPredict_u)
+            trainYPlot, testYPlot, closePlot2 = ModelPlot.Shift_Plot(p_c_unscaled_2, len(trainX_unscaled), p_trainY_u, p_testY_u)
             # plot baseline and predictions
-            ModelPlot.Plot_Actual(ds_f_c, trainYPlot, testYPlot, trainPredictPlot, testPredictPlot, coin, 'LSTM2')
+            closePlot1 = numpy.reshape(closePlot1, (1, len(closePlot1)))
+            ModelPlot.Plot_Actual(closePlot1[0], trainYPlot, testYPlot, trainPredictPlot, testPredictPlot, coin, ML_MODEL)
             # Saving model to disk
-            ModelParameters.Save_Model(lstm, coin, 'LSTM')
+            ModelParameters.Save_Model(lstm, coin, ML_MODEL)
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False

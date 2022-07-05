@@ -9,10 +9,11 @@ keras
 neupy
 scikit-learn
 scipy
-tensorflow==2.7.0
+tensorflow
 tensorflow-probability
 tensorflow-datasets==4.1.0
 Pillow==9.0.0
 statsmodels
 numpy
 cvxpy
+outlier_utils

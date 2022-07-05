@@ -2,7 +2,11 @@ import warnings
 from helper import Helper
 from scipy import stats
 from statsmodels.tsa import stattools
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
 from datapreparation import Datapreparation
+import os
+from outliers import smirnov_grubbs as grubbs
 
 warnings.filterwarnings("ignore")
 
@@ -24,7 +28,7 @@ class Stats:
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
-        return True
+        return stat, p
 
     def D_Agostino(dataset):
         try:
@@ -39,7 +43,7 @@ class Stats:
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
-        return True
+        return stat, p
 
     def Anderson_Darling(dataset):
         try:
@@ -56,14 +60,14 @@ class Stats:
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
-        return True
+        return sl, cv
 
     def Pearson(dataset1, dataset2):
         try:
-            df1 = Datapreparation.Reshape_Float(dataset1)
-            df2 = Datapreparation.Reshape_Float(dataset2)
+            #df1 = Datapreparation.Reshape_Float(dataset1)
+            #df2 = Datapreparation.Reshape_Float(dataset2)
             print("Pearson test. 2 Samples correlation test.")
-            stat, p = stats.pearsonr(df1, df2)
+            stat, p = stats.pearsonr(dataset1, dataset2)
             print('stat=%.3f, p=%.3f' % (stat, p))
             if p > 0.05:
                 print('Probably independent')
@@ -72,14 +76,14 @@ class Stats:
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
-        return True
+        return stat, p
 
     def Spearman(dataset1, dataset2):
         try:
-            df1 = Datapreparation.Reshape_Float(dataset1)
-            df2 = Datapreparation.Reshape_Float(dataset2)
+            #df1 = Datapreparation.Reshape_Float(dataset1)
+            #df2 = Datapreparation.Reshape_Float(dataset2)
             print("Spearman test. 2 Samples correlation test.")
-            stat, p = stats.spearmanr(df1, df2)
+            stat, p = stats.spearmanr(dataset1, dataset2)
             print('stat=%.3f, p=%.3f' % (stat, p))
             if p > 0.05:
                 print('Probably independent')
@@ -88,14 +92,14 @@ class Stats:
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
-        return True
+        return stat, p
 
     def Kendall(dataset1, dataset2):
         try:
-            df1 = Datapreparation.Reshape_Float(dataset1)
-            df2 = Datapreparation.Reshape_Float(dataset2)
+            #df1 = Datapreparation.Reshape_Float(dataset1)
+            #df2 = Datapreparation.Reshape_Float(dataset2)
             print("Kendall test. 2 Samples correlation test.")
-            stat, p = stats.kendalltau(df1, df2)
+            stat, p = stats.kendalltau(dataset1, dataset2)
             print('stat=%.3f, p=%.3f' % (stat, p))
             if p > 0.05:
                 print('Probably independent')
@@ -104,14 +108,14 @@ class Stats:
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
-        return True
+        return stat, p
 
     def Chi_Squared(dataset1, dataset2):
         try:
-            df1 = Datapreparation.Reshape_Float(dataset1)
-            df2 = Datapreparation.Reshape_Float(dataset1)
+            #df1 = Datapreparation.Reshape_Float(dataset1)
+            #df2 = Datapreparation.Reshape_Float(dataset1)
             print("Chi^2 test. 2 Samples correlation test.")
-            stat, p = stats.chi2(df1, df2)
+            stat, p, dof, expected = stats.chi2_contingency(observed=[dataset1, dataset2])
             print('stat=%.3f, p=%.3f' % (stat, p))
             if p > 0.05:
                 print('Probably independent')
@@ -120,7 +124,7 @@ class Stats:
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
-        return True
+        return stat, p
 
     def Dickey_Fuller(dataset):
         try:
@@ -135,7 +139,7 @@ class Stats:
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
-        return True
+        return stat, p
 
     def Kwiatkowski_Phillips_Schmidt_Shin(dataset):
         try:
@@ -150,7 +154,7 @@ class Stats:
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
-        return True
+        return stat, p, lags, obs, crit, t
 
     def Student_T(dataset1, dataset2):
         try:
@@ -166,7 +170,7 @@ class Stats:
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
-        return True
+        return stat, p
 
     def Paired_Student_T(dataset1, dataset2):
         try:
@@ -182,7 +186,7 @@ class Stats:
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
-        return True
+        return stat, p
 
     def ANOVA(dataset1, dataset2):
         try:
@@ -198,7 +202,7 @@ class Stats:
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
-        return True
+        return stat, p
 
     def Mann_Whitney(dataset1, dataset2):
         try:
@@ -214,7 +218,7 @@ class Stats:
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
-        return True
+        return stat, p
 
     def Wilcoxon_Signed_Rank(dataset1, dataset2):
         try:
@@ -230,7 +234,7 @@ class Stats:
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
-        return True
+        return stat, p
 
     def Kruskal_Wallis_H(dataset1, dataset2):
         try:
@@ -246,7 +250,7 @@ class Stats:
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
-        return True
+        return stat, p
 
     def Friedman(dataset1, dataset2):
         try:
@@ -262,4 +266,33 @@ class Stats:
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
+        return stat, p
+
+
+    def Plots(dataset):
+        try:
+            plt.hist(dataset)
+            filename = os.path.join('stats_plots/histogram.png')
+            plt.savefig(filename)
+            plt.close()
+            sm.ProbPlot(dataset).ppplot(line="r")
+            filename = os.path.join('stats_plots/ppplot.png')
+            plt.savefig(filename)
+            plt.close()
+            sm.ProbPlot(dataset).qqplot(line="r")
+            filename = os.path.join('stats_plots/qqplot.png')
+            plt.savefig(filename)
+            plt.close()
+        except Exception as e:
+            print("An exception occurred - {}".format(e))
+            return False
         return True
+
+    def Grubbs(dataset, coin):
+        try:
+            print("Outliers removal using the Grubbs test.")
+            data_wo_outliers = grubbs.test(dataset, alpha=.05)
+        except Exception as e:
+            print("An exception ocurred - {}".format(e))
+            return False
+        return data_wo_outliers

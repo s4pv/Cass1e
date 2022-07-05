@@ -16,6 +16,8 @@ N_FEATURES = parsed_config['ml_options']['N_FEATURES']
 N_STEPS_IN = parsed_config['ml_options']['N_STEPS_IN']
 N_STEPS_OUT = parsed_config['ml_options']['N_STEPS_OUT']
 
+NO_DATA = parsed_config['model_options']['NO_DATA']
+
 
 class Datapreparation:
 
@@ -46,6 +48,105 @@ class Datapreparation:
             return False
         return final_dataframe
 
+    def Fractional_Differentiation(dataset, weight):
+        try:
+            dataframe = pd.DataFrame(dataset)
+            dataframe = Datapreparation.Reshape_Float(dataframe)
+            dataframe = pd.DataFrame(dataframe)
+            # ratio returns
+            # dataframe[coin['symbol']] = dataframe / dataframe.shift(1) - 1
+            # log returns (not for volume)
+            # dataframe = numpy.log(dataframe/dataframe.shift(1))
+            dataframe[1] = dataframe[1] - dataframe[1].shift(1) * weight
+            dataframe[2] = dataframe[2] - dataframe[2].shift(1) * weight
+            dataframe[3] = dataframe[3] - dataframe[3].shift(1) * weight
+            dataframe[4] = dataframe[4] - dataframe[4].shift(1) * weight
+            dataframe = dataframe.drop(index=0)
+            dataframe.columns = ['volume', 'open', 'high', 'low', 'close']
+        except Exception as e:
+            print("An exception ocurred - {}".format(e))
+            return False
+        return dataframe
+
+    def Fractional_Integration(returns, price_dataset, weight, type):
+        try:
+            prices = numpy.empty_like(returns)
+            prices = pd.DataFrame(prices)
+            df = pd.DataFrame(price_dataset)
+            df = Datapreparation.Reshape_Float(df)
+            df = pd.DataFrame(df)
+            df.columns = ['volume', 'open', 'high', 'low', 'close']
+            initial_price = df['close'][0]
+            print('a')
+            if type == 'forecast':
+                final_price = df['close'][len(price_dataset)-1]
+            elif type == 'model':
+                final_price = df['close'][len(price_dataset) - N_STEPS_OUT]
+            print('b')
+            returns_df = pd.DataFrame(returns)
+            returns_df = Datapreparation.Reshape_Float(returns_df)
+            returns_df = pd.DataFrame(returns_df)
+            # prices
+            if len(returns) > N_STEPS_OUT:
+                prices.iloc[0] = initial_price
+            else:
+                prices.iloc[0] = final_price
+            for x in range(len(prices) - 1):
+                prices.iloc[x + 1] = prices.iloc[x] * weight + returns_df.iloc[x + 1]
+            prices.columns = ['close']
+        except Exception as e:
+            print("An exception ocurred - {}".format(e))
+            return False
+        return prices
+
+    def Returns_Transformation(dataset):
+        try:
+            dataframe = pd.DataFrame(dataset)
+            dataframe = Datapreparation.Reshape_Float(dataframe)
+            dataframe = pd.DataFrame(dataframe)
+            # ratio returns
+            # dataframe[coin['symbol']] = dataframe / dataframe.shift(1) - 1
+            # log returns (not for volume)
+            #dataframe = numpy.log(dataframe/dataframe.shift(1))
+            dataframe[1] = numpy.log(dataframe[1]/dataframe[1].shift(1))
+            dataframe[2] = numpy.log(dataframe[2]/dataframe[2].shift(1))
+            dataframe[3] = numpy.log(dataframe[3]/dataframe[3].shift(1))
+            dataframe[4] = numpy.log(dataframe[4]/dataframe[4].shift(1))
+            dataframe = dataframe.drop(index=0)
+            dataframe.columns = ['volume', 'open', 'high', 'low', 'close']
+        except Exception as e:
+            print("An exception ocurred - {}".format(e))
+            return False
+        return dataframe
+
+    def Price_Transformation(returns, price_dataset, type):
+        try:
+            prices = numpy.empty_like(returns)
+            prices = pd.DataFrame(prices)
+            df = pd.DataFrame(price_dataset)
+            df = Datapreparation.Reshape_Float(df)
+            df = pd.DataFrame(df)
+            df.columns = ['volume', 'open', 'high', 'low', 'close']
+            initial_price = df['close'][0]
+            if type == 'forecast':
+                final_price = df['close'][len(price_dataset)-1]
+            elif type == 'model':
+                final_price = df['close'][len(price_dataset)-1-N_STEPS_OUT]
+            returns_df = pd.DataFrame(returns)
+            returns_df = Datapreparation.Reshape_Float(returns_df)
+            returns_df = pd.DataFrame(returns_df)
+            # prices
+            if len(returns) > N_STEPS_OUT:
+                prices.iloc[0] = initial_price
+            else:
+                prices.iloc[0] = final_price
+            for x in range(len(prices)-1):
+                prices.iloc[x+1] = prices.iloc[x] * (1 + returns_df.iloc[x+1])
+            prices.columns = ['close']
+        except Exception as e:
+            print("An exception ocurred - {}".format(e))
+            return False
+        return prices
 
     # split a multivariate sequence into samples
     def Split_Sequences(sequences, N_STEPS_IN, N_STEPS_OUT):
@@ -67,7 +168,6 @@ class Datapreparation:
             return False
         return numpy.array(X), numpy.array(y)
 
-
     def Reshape_Float(dataset):
         try:
             # Convert an array of values into a dataset matrix
@@ -83,7 +183,7 @@ class Datapreparation:
 
     def Minmax_Scaler(dataset, model, coin):
         try:
-            #print('Starting to normalize the set with Min Max Scaler')
+            #print('Starting to scale the set with Min Max Scaler')
             scaler = preprocessing.MinMaxScaler(feature_range=(0, 1))
             ds = scaler.fit_transform(dataset)
             ScalerParameters.Save(coin, scaler, 'MINMAXSCALER', model)
@@ -91,6 +191,95 @@ class Datapreparation:
             print("An exception occurred - {}".format(e))
             return False
         return ds
+
+    def Standard_Scaler(dataset, model, coin):
+        try:
+            #print('Starting to scale the set with Standard Scaler')
+            scaler = preprocessing.StandardScaler()
+            ds = scaler.fit_transform(dataset)
+            ScalerParameters.Save(coin, scaler, 'STANDARDSCALER', model)
+        except Exception as e:
+            print("An exception occurred - {}".format(e))
+            return False
+        return ds
+
+    def Maxabs_Scaler(dataset, model, coin):
+        try:
+            #print('Starting to scale the set with Maxabs Scaler')
+            scaler = preprocessing.MaxAbsScaler()
+            ds = scaler.fit_transform(dataset)
+            ScalerParameters.Save(coin, scaler, 'MAXABSSCALER', model)
+        except Exception as e:
+            print("An exception occurred - {}".format(e))
+            return False
+        return ds
+
+    def Robust_Scaler(dataset, model, coin):
+        try:
+            #print('Starting to scale the set with Robust Scaler')
+            scaler = preprocessing.RobustScaler(quantile_range=(25, 75))
+            ds = scaler.fit_transform(dataset)
+            ScalerParameters.Save(coin, scaler, 'ROBUSTSCALER', model)
+        except Exception as e:
+            print("An exception occurred - {}".format(e))
+            return False
+        return ds
+
+    def Yeo_Johnson_Scaler(dataset, model, coin):
+        try:
+            #print('Starting to scale the set with Yeo-Johnson Power Scaler')
+            scaler = preprocessing.PowerTransformer(method="yeo-johnson")
+            ds = scaler.fit_transform(dataset)
+            ScalerParameters.Save(coin, scaler, 'YEOJOHNSONSCALER', model)
+        except Exception as e:
+            print("An exception occurred - {}".format(e))
+            return False
+        return ds
+
+    def Box_Cox_Scaler(dataset, model, coin):
+        try:
+            # print('Starting to scale the set with Box-Cox Power Scaler(data must be entirely positive)')
+            scaler = preprocessing.PowerTransformer(method="box-cox")
+            ds = scaler.fit_transform(dataset)
+            ScalerParameters.Save(coin, scaler, 'BOXCOXSCALER', model)
+        except Exception as e:
+            print("An exception occurred - {}".format(e))
+            return False
+        return ds
+
+    def Uniform_Scaler(dataset, model, coin):
+        try:
+            # print('Starting to scale the set with Uniform Quantile Scaler')
+            scaler = preprocessing.QuantileTransformer(output_distribution="uniform")
+            ds = scaler.fit_transform(dataset)
+            ScalerParameters.Save(coin, scaler, 'UNIFORMSCALER', model)
+        except Exception as e:
+            print("An exception occurred - {}".format(e))
+            return False
+        return ds
+
+    def Gaussian_Scaler(dataset, model, coin):
+        try:
+            # print('Starting to scale the set with Gaussian Quantile Scaler')
+            scaler = preprocessing.QuantileTransformer(output_distribution="normal")
+            ds = scaler.fit_transform(dataset)
+            ScalerParameters.Save(coin, scaler, 'GaussianSCALER', model)
+        except Exception as e:
+            print("An exception occurred - {}".format(e))
+            return False
+        return ds
+
+    def Normal_Scaler(dataset, model, coin):
+        try:
+           # print('Starting to scale the set with Normal Scaler')
+           scaler = preprocessing.Normalizer()
+           ds = scaler.fit_transform(dataset)
+           ScalerParameters.Save(coin, scaler, 'NORMALSCALER', model)
+        except Exception as e:
+           print("An exception occurred - {}".format(e))
+           return False
+        return ds
+
 
     def Dataset_Split(dataset):
         try:
@@ -121,6 +310,7 @@ class Datapreparation:
             ds_f_ohlv = numpy.array(ds_f_ohlv)
             ds_f_c = numpy.array(ds_f_c).reshape(-1, 1)
             #print(ds_f_ohlv.shape)
+            #print(ds_f_ohlcv.shape)
             #print(ds_f_c.shape)
         except Exception as e:
             print("An exception occurred - {}".format(e))

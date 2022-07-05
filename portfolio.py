@@ -35,6 +35,10 @@ class Portfolio:
     def Optimum_Accounting(assets, assets_weights, crypto):
         try:
             pass
+            #for x in len(assets):
+                #if x == crypto:
+            #       port_size = np.append(assets[x], assets_weights[x])
+            #print(port_opt)
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
@@ -45,7 +49,9 @@ class Portfolio:
             dataframe = pd.DataFrame(dataset)
             dataframe = Datapreparation.Reshape_Float(dataframe)
             dataframe = pd.DataFrame(dataframe)
+            # ratio returns
             # dataframe[coin['symbol']] = dataframe / dataframe.shift(1) - 1
+            # log returns
             dataframe[coin['symbol']] = np.log(dataframe/dataframe.shift(1))
             dataframe.pop(0)
             dataframe = dataframe.drop(dataframe.index[0])
@@ -87,7 +93,7 @@ class Portfolio:
             plt.ylabel('Portfolio Return')
             plt.colorbar(label='Sharpe ratio (not adjusted for short rate)')
             #plt.show()
-            filename = os.path.join('C:/Users/pablo/PycharmProjects/Cass1e/portfolio_plots/simulations.png')
+            filename = os.path.join('portfolio_plots/simulations.png')
             plt.savefig(filename)
             plt.close()
             print('Elapsed Time: %.2f seconds' % (time.time() - start))
@@ -200,7 +206,7 @@ class Portfolio:
             # Make an array of 50 returns between the minimum return and maximum return
             # discovered earlier.
             port_returns, port_vols = Portfolio.Simulations(data_returns)
-            target_returns = np.linspace(port_returns.min(), port_returns.max(), 200) # 200 instead of 50
+            target_returns = np.linspace(port_returns.min(), port_returns.max(), 50)
             for target_return in target_returns:
                 constraints = ({'type': 'eq', 'fun': lambda x: Portfolio.port_stats(x, data_returns)['return'] - target_return},
                                {'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
@@ -255,7 +261,7 @@ class Portfolio:
             plt.ylabel('Portfolio Return')
             plt.colorbar(label='Sharpe ratio (not adjusted for short rate)')
             #plt.show()
-            filename = os.path.join('C:/Users/pablo/PycharmProjects/Cass1e/portfolio_plots/Efficient_Frontier.png')
+            filename = os.path.join('portfolio_plots/Efficient_Frontier.png')
             plt.savefig(filename)
             plt.close()
         except Exception as e:
