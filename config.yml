@@ -12,17 +12,17 @@ model_options:
 
 # Portfolio Options (degree of memory (0: full memory about past data, 1001: only memory about forecasts))
 portfolio_options:
-  PORTFOLIO_MEMORY: 0
+  PORTFOLIO_MEMORY: 1000
   OPTIMIZATION_TYPE: 'OPTIMAL_SHARPE'
 
 # These parameters apply for the modern machine learning models
 ml_options:
-  TRAIN_SIZE: 0.9
+  TRAIN_SIZE: 0.75
   NEURONS: 128
-  DROPOUT: 0.25
+  DROPOUT: 0.15
   N_STEPS_IN: 1
-  N_STEPS_OUT: 32
-  EPOCH: 25
+  N_STEPS_OUT: 100
+  EPOCH: 250
   N_FEATURES: 4
   VERBOSE: 2
 

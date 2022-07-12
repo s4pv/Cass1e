@@ -77,12 +77,10 @@ class Datapreparation:
             df = pd.DataFrame(df)
             df.columns = ['volume', 'open', 'high', 'low', 'close']
             initial_price = df['close'][0]
-            print('a')
             if type == 'forecast':
                 final_price = df['close'][len(price_dataset)-1]
             elif type == 'model':
                 final_price = df['close'][len(price_dataset) - N_STEPS_OUT]
-            print('b')
             returns_df = pd.DataFrame(returns)
             returns_df = Datapreparation.Reshape_Float(returns_df)
             returns_df = pd.DataFrame(returns_df)

@@ -93,7 +93,7 @@ def main():
                             dataframe = Datapreparation.OHLCV_DataFrame(dataset)
                             print('Fitting the model to the new data')
                             print('This may take a while...')
-                            MachineLearning.LSTM(dataframe, coin)
+                            #MachineLearning.LSTM(dataframe, coin)
                             print('Model fitted. Results and plots can be seen on respective folders.')
                     print('Extracting pricing data from the server to forecast the coin: ' + coin['symbol'])
                     dataset = cassie.client.get_klines(symbol=coin['symbol'], interval=cassie.WORK_TIMEFRAME,
@@ -171,11 +171,14 @@ def main():
     #print(data_returns)
     data_returns = data_returns.iloc[cassie.PORTFOLIO_MEMORY:]
     #print(data_returns)
-    assets, optimal_sharpe_weights, optimal_variance_weights = Portfolio.Plot(data_returns)
+    #assets, optimal_sharpe_weights, optimal_variance_weights = Portfolio.Plot(data_returns)
+    assets, optimal_weights = Portfolio.Capital_Market_Line(data_returns)
     #if cassie.OPTIMIZATION_TYPE == 'OPTIMAL_SHARPE':
     #    Portfolio.Optimum_Accounting(assets, optimal_sharpe_weights, coin['symbol'])
-    #else:
+    #else if cassie.OPTIMIZATION_TYPE == 'MINIMUM_VARIANCE:
     #    Portfolio.Optimum_Accounting(assets, optimal_variance_weights, coin['symbol'])
+    #else:
+    #       Portfolio.Optimum_Accounting(assets, optimal_weights, coin['symbol'])
 
 while True:
     try:

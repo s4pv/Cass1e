@@ -269,7 +269,6 @@ class Portfolio:
             return False
         return assets1, optimal_sharpe_weights, optimal_variance_weights
 
-#There is missing sintax below here
     def Capital_Market_Line(data_returns):
         try:
             minimal_volatilities, target_returns = Portfolio.Efficient_Frontier(data_returns)
@@ -277,45 +276,68 @@ class Portfolio:
             min_index = np.argmin(minimal_volatilities)
             ex_returns = target_returns[min_index:]
             ex_volatilities = minimal_volatilities[min_index:]
-
             var = sci.splrep(ex_returns, ex_volatilities)
             rfr = 0.01
             m = port_vols.max() / 2
             li = port_returns.max() / 2
 
-            optimal = optimize.fsolve(Portfolio.eqs, [rfr, m, li])
-            print(optimal)
+            def func(x):
+                try:
+                    # Spline approximation of the efficient frontier
+                    spline_approx = sci.splev(x, var, der=0)
+                except Exception as e:
+                    print("An exception ocurred - {}".format(e))
+                    return False
+                return spline_approx
+
+            def d_func(x):
+                try:
+                    # first derivative of the approximate efficient frontier function
+                    deriv = sci.splev(x, var, der=1)
+                except Exception as e:
+                    print("An exception ocurred - {}".format(e))
+                    return False
+                return deriv
+
+            def eqs(p, rfr=0.01):
+                try:
+                    # rfr = risk free rate
+                    eq1 = rfr - p[0]
+                    eq2 = rfr + p[1] * p[2] - func(p[2])
+                    eq3 = p[1] - d_func(p[2])
+                except Exception as e:
+                    print("An exception ocurred - {}".format(e))
+                    return False
+                return eq1, eq2, eq3
+
+            optimal = optimize.fsolve(eqs, [rfr, m, li])
+            #print(optimal)
+            num_assets = len(data_returns.columns)
+            assets = data_returns.columns
+            weights = np.random.dirichlet(np.ones(num_assets), size=1)
+            weights = weights[0]
+            bounds = tuple((0, 1) for x in weights)
+            initializer = num_assets * [1. / num_assets, ]
+            constraints = (
+                {'type': 'eq', 'fun': lambda x: Portfolio.port_stats(x, data_returns)['return'] - func(optimal[2])},
+                {'type': 'eq', 'fun': lambda x: np.sum(x) - 1},
+            )
+            result = optimize.minimize(Portfolio.minimize_volatility,
+                                       x0=initializer,
+                                       args=data_returns,
+                                       method='SLSQP',
+                                       bounds=bounds,
+                                       constraints=constraints)
+
+            optimal_weights = result['x'].round(4)
+            optimal_stats = Portfolio.port_stats(optimal_weights, data_returns)
+            print('Capital Market Line results:')
+            print('Optimal Portfolio Return: ', round(optimal_stats['return'] * 100, 4))
+            print('Optimal Portfolio Volatility: ', round(optimal_stats['volatility'] * 100, 4))
+            print('Optimal Portfolio Sharpe Ratio: ', round(optimal_stats['sharpe'], 4))
+            print(list(zip(assets, list(optimal_weights))))
+            assets, optimal_weights = list(zip(*list(zip(assets, list(optimal_weights)))))
         except Exception as e:
             print("An exception ocurred - {}".format(e))
             return False
-        return True
-
-    def func(x, var):
-        try:
-            # Spline approximation of the efficient frontier
-            spline_approx = sci.splev(x, var, der=0)
-        except Exception as e:
-            print("An exception ocurred - {}".format(e))
-            return False
-        return spline_approx
-
-    def d_func(x, var):
-        try:
-            # first derivative of the approximate efficient frontier function
-            deriv = sci.splev(x, var, der=1)
-        except Exception as e:
-            print("An exception ocurred - {}".format(e))
-            return False
-        return deriv
-
-    def eqs(p, rfr=0.01):
-        try:
-            # rfr = risk free rate
-
-            eq1 = rfr - p[0]
-            eq2 = rfr + p[1] * p[2] - Portfolio.func(p[2])
-            eq3 = p[1] - Portfolio.d_func(p[2])
-        except Exception as e:
-            print("An exception ocurred - {}".format(e))
-            return False
-        return eq1, eq2, eq3
+        return assets, optimal_weights
