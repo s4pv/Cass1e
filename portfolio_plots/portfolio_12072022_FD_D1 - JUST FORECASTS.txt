@@ -1,0 +1,24 @@
+Optimal Sharpe Results:
+Optimal Portfolio Return:  1.3192
+Optimal Portfolio Volatility:  1.945
+Optimal Portfolio Sharpe Ratio:  0.6783
+[('BTCUSDT', 0.0), ('ETHUSDT', 0.0), ('ADAUSDT', 0.0), ('LINKUSDT', 0.1618), ('THETAUSDT', 0.0),
+ ('MATICUSDT', 0.0), ('ATOMUSDT', 0.2563), ('FTMUSDT', 0.0), ('ALGOUSDT', 0.0621), ('FTTUSDT', 0.0),
+ ('SOLUSDT', 0.0), ('SRMUSDT', 0.4481), ('DOTUSDT', 0.0), ('AVAXUSDT', 0.0), ('AXSUSDT', 0.0), ('ARUSDT', 0.0),
+ ('RAYUSDT', 0.0717)]
+Minimum Variance results:
+Optimal Portfolio Return:  0.8372
+Optimal Portfolio Volatility:  1.5664
+Optimal Portfolio Sharpe Ratio:  0.5345
+[('BTCUSDT', 0.3417), ('ETHUSDT', 0.0), ('ADAUSDT', 0.0282), ('LINKUSDT', 0.0017), ('THETAUSDT', 0.0),
+ ('MATICUSDT', 0.0), ('ATOMUSDT', 0.2935), ('FTMUSDT', 0.0), ('ALGOUSDT', 0.1156), ('FTTUSDT', 0.0),
+ ('SOLUSDT', 0.0), ('SRMUSDT', 0.2193), ('DOTUSDT', 0.0), ('AVAXUSDT', 0.0), ('AXSUSDT', 0.0), ('ARUSDT', 0.0),
+ ('RAYUSDT', 0.0)]
+Capital Market Line results:
+Optimal Portfolio Return:  1.6519
+Optimal Portfolio Volatility:  2.5704
+Optimal Portfolio Sharpe Ratio:  0.6426
+[('BTCUSDT', 0.0), ('ETHUSDT', 0.0), ('ADAUSDT', 0.0), ('LINKUSDT', 0.1545), ('THETAUSDT', 0.0),
+ ('MATICUSDT', 0.0), ('ATOMUSDT', 0.0721), ('FTMUSDT', 0.0), ('ALGOUSDT', 0.0), ('FTTUSDT', 0.0),
+ ('SOLUSDT', 0.0), ('SRMUSDT', 0.6072), ('DOTUSDT', 0.0), ('AVAXUSDT', 0.0), ('AXSUSDT', 0.0), ('ARUSDT', 0.0),
+ ('RAYUSDT', 0.1662)]
