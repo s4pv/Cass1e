@@ -1,0 +1,3 @@
+Pearson test. 2 Samples correlation test.
+stat=0.901, p=0.000
+Probably dependent

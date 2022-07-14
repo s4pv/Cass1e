@@ -1,0 +1,7 @@
+Minimum Variance Results:
+('Optimal Portfolio Return: ', -0.2107)
+('Optimal Portfolio Volatility: ', 1.4807)
+('Optimal Portfolio Sharpe Ratio: ', -0.1423)
+('Optimal Portfolio VAR: ', -0.0392)
+('Optimal Portfolio n days VAR: ', -0.39)
+[('BTCUSDT', 0.3033), ('ETHUSDT', 0.0), ('ADAUSDT', 0.0), ('LINKUSDT', 0.0), ('THETAUSDT', 0.0), ('MATICUSDT', 0.0197), ('ATOMUSDT', 0.0), ('FTMUSDT', 0.0075), ('ALGOUSDT', 0.6612), ('FTTUSDT', 0.0), ('SOLUSDT', 0.0), ('SRMUSDT', 0.0), ('DOTUSDT', 0.0), ('AVAXUSDT', 0.0), ('AXSUSDT', 0.0), ('ARUSDT', 0.0082), ('RAYUSDT', 0.0)]

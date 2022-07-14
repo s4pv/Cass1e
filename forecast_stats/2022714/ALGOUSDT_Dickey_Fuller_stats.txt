@@ -1,0 +1,3 @@
+Dickey Fuller test. testing for unit root.
+stat=-3.953, p=0.002
+Probably Stationary

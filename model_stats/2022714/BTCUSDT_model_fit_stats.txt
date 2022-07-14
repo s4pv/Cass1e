@@ -1,0 +1,5 @@
+Train Score: 11517.22 RMSE
+Test Score: 4299.15 RMSE
+Median Absolute Error (MAE): 18482676.0
+Mean Absolute Percentage Error (MAPE): 12.789999961853027 %
+Median Absolute Percentage Error (MDAPE): 13.09 %

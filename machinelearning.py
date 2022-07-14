@@ -8,6 +8,7 @@ import math
 import warnings
 from sklearn.metrics import mean_squared_error
 import numpy
+import os
 
 from helper import Helper
 from datapreparation import Datapreparation
@@ -34,25 +35,26 @@ ML_MODEL = parsed_config['model_options']['ML_MODEL']
 WEIGHT = parsed_config['model_options']['WEIGHT']
 
 class MachineLearning:
-    def LSTM(dataset, coin):
+    def LSTM(dataset, date, coin):
         try:
             print('Transforming the data to returns to make the data stationary')
             #return_dataset = Datapreparation.Returns_Transformation(dataset)
             return_dataset = Datapreparation.Fractional_Differentiation(dataset, WEIGHT)
             aux_c, aux_ohlv, aux_ohlcv = Datapreparation.Prepare_Data(dataset)
             aux_train, aux_test = Datapreparation.Dataset_Split(aux_ohlcv)
-            print('Testing if the data is stationary on close data')
-            statsDF, pDF = Stats.Dickey_Fuller(return_dataset['close'])
+            a = 'Testing if the data is stationary on close data'
+            print(a)
+            statsDF, pDF = Stats.Dickey_Fuller(return_dataset['close'], coin, 'model', date)
             # preprocessing data
             r_c, r_ohlv, r_ohlcv = Datapreparation.Prepare_Data(return_dataset)
             # scaling data
             print('Starting to normalize the set with the quantile gaussian transformation (robust to outliers)')
-            r_ohlcv_scaled = Datapreparation.Gaussian_Scaler(r_ohlcv, 'OHLCV_LSTM', coin)
-            #r_ohlcv_scaled = Datapreparation.PowerTransformer(r_ohlcv, 'OHLV_LSTM', coin)
-            r_ohlv_scaled = Datapreparation.Gaussian_Scaler(r_ohlv, 'OHLV_LSTM', coin)
-            #r_ohlv_scaled = Datapreparation.PowerTransformer(r_ohlv, 'OHLV_LSTM', coin)
-            r_c_scaled = Datapreparation.Gaussian_Scaler(r_c, 'C_LSTM', coin)
-            #r_c_scaled = Datapreparation.PowerTransformer(r_c, 'C_LSTM', coin)
+            r_ohlcv_scaled = Datapreparation.Gaussian_Scaler(r_ohlcv, 'OHLCV_LSTM', coin, date)
+            #r_ohlcv_scaled = Datapreparation.PowerTransformer(r_ohlcv, 'OHLV_LSTM', coin, date)
+            r_ohlv_scaled = Datapreparation.Gaussian_Scaler(r_ohlv, 'OHLV_LSTM', coin, date)
+            #r_ohlv_scaled = Datapreparation.PowerTransformer(r_ohlv, 'OHLV_LSTM', coin, date)
+            r_c_scaled = Datapreparation.Gaussian_Scaler(r_c, 'C_LSTM', coin, date)
+            #r_c_scaled = Datapreparation.PowerTransformer(r_c, 'C_LSTM', coin, date)
             #print(ohlcv_scaled.shape)
             #print(ohlv_scaled.shape)
             #print(c_scaled.shape)
@@ -61,10 +63,11 @@ class MachineLearning:
             r_c_scaled.columns = ['close']
             # plot histogram probplot and qplot
             print('Starting to plot histogram, PPplot and QQplot on close data')
-            Stats.Plots(r_c_scaled['close'])
+            Stats.Plots(r_c_scaled['close'], coin, 'model', date)
             # testing for normality
-            print('Testing for normality on close data sets.')
-            statsSWC, pSWC = Stats.Shapiro_Wilk(r_c_scaled['close'])
+            b = 'Testing for normality on close data sets.'
+            print(b)
+            statsSWC, pSWC = Stats.Shapiro_Wilk(r_c_scaled['close'], coin, 'model', date)
             # Split sequences
             train, test = Datapreparation.Dataset_Split(r_ohlcv_scaled)
             # train and test split
@@ -163,30 +166,43 @@ class MachineLearning:
             #print(p_c_u.shape)
             # Train Metrics
             trainScore = math.sqrt(mean_squared_error(p_trainY_u, p_trainPredict_u))
-            print('Train Score: %.2f RMSE' % (trainScore))
+            c = 'Train Score: %.2f RMSE' % (trainScore)
+            print(c)
             testScore = math.sqrt(mean_squared_error(p_testY_u, p_testPredict_u))
-            print('Test Score: %.2f RMSE' % (testScore))
+            d = 'Test Score: %.2f RMSE' % (testScore)
+            print(d)
             # Estimate model performance
             #aux for stats
             aux_testY = numpy.squeeze(numpy.asarray(p_testY_u))
             aux_testPredict = numpy.squeeze(numpy.asarray(p_testPredict_u))
             # Spearman (R2) just for parametric/normally distributed data
-            #Stats.Spearman(aux_testY, aux_testPredict)
+            #stat1, p1 = Stats.Spearman(aux_testY, aux_testPredict)
             # Pearson test (R2) for non-parametric/not normally distributed data
-            Stats.Pearson(aux_testY, aux_testPredict)
+            stat2, p2 = Stats.Pearson(aux_testY, aux_testPredict, coin, 'model', date)
             # Kendall test
-            #Stats.Kendall(aux_testY, aux_testPredict)
+            #stat3, p3 = Stats.Kendall(aux_testY, aux_testPredict)
             # Chi Squared test (Xi2) for non-parametric/not normally distributed data
-            Stats.Chi_Squared(aux_testY, aux_testPredict)
+            stat4, p4 = Stats.Chi_Squared(aux_testY, aux_testPredict, coin, 'model', date)
             # Mean Absolute Error (MAE)
             MAE = mean_squared_error(p_testY_u, p_testPredict_u)
-            print(f'Median Absolute Error (MAE): {numpy.round(MAE, 2)}')
+            e = f'Median Absolute Error (MAE): {numpy.round(MAE, 2)}'
+            print(e)
             # Mean Absolute Percentage Error (MAPE)
             MAPE = numpy.mean((numpy.abs(numpy.subtract(p_testY_u, p_testPredict_u) / p_testY_u))) * 100
-            print(f'Mean Absolute Percentage Error (MAPE): {numpy.round(MAPE[0], 2)} %')
+            f = f'Mean Absolute Percentage Error (MAPE): {numpy.round(MAPE[0], 2)} %'
+            print(f)
             # Median Absolute Percentage Error (MDAPE)
             MDAPE = numpy.median((numpy.abs(numpy.subtract(p_testY_u, p_testPredict_u) / p_testY_u))) * 100
-            print(f'Median Absolute Percentage Error (MDAPE): {numpy.round(MDAPE, 2)} %')
+            g = f'Median Absolute Percentage Error (MDAPE): {numpy.round(MDAPE, 2)} %'
+            print(g)
+            # saving model fit stats
+            lines = [str(c), str(d), str(e), str(f), str(g)]
+            filedir = 'model_stats/' + str(date) + '/'
+            filename = os.path.join(filedir, str(coin['symbol']) + '_model_fit_stats.txt')
+            os.makedirs(filedir, exist_ok=True)
+            with open(filename, 'w') as f:
+                f.write('\n'.join(lines))
+                f.close()
             # reshape dataset to plot correctly close data
             p_c_unscaled_2 = dataset['close'].to_numpy()
             p_c_unscaled_2 = numpy.reshape(p_c_unscaled_2, (len(p_c_unscaled_2), 1))
@@ -198,9 +214,9 @@ class MachineLearning:
             trainYPlot, testYPlot, closePlot2 = ModelPlot.Shift_Plot(p_c_unscaled_2, len(trainX_unscaled), p_trainY_u, p_testY_u)
             # plot baseline and predictions
             closePlot1 = numpy.reshape(closePlot1, (1, len(closePlot1)))
-            ModelPlot.Plot_Actual(closePlot1[0], trainYPlot, testYPlot, trainPredictPlot, testPredictPlot, coin, ML_MODEL)
+            ModelPlot.Plot_Actual(closePlot1[0], trainYPlot, testYPlot, trainPredictPlot, testPredictPlot, coin, ML_MODEL, date)
             # Saving model to disk
-            ModelParameters.Save_Model(lstm, coin, ML_MODEL)
+            ModelParameters.Save_Model(lstm, coin, ML_MODEL, date)
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False

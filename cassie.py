@@ -66,6 +66,7 @@ class Cassie:
     print('We are in ' + str(tzlocal.get_localzone()) + ' timezone.')
     utc_aware = utc_unaware.replace(tzinfo=tzlocal.get_localzone())
     local_aware = datetime(utc_aware.year, utc_aware.month, utc_aware.day, utc_aware.hour, utc_aware.minute)
+    local_date = str(utc_aware.year) + str(utc_aware.month) + str(utc_aware.day)
     print('Current datetime is ' + str(local_aware))
 
     # Constructor and instance variables
@@ -93,14 +94,14 @@ def main():
                             dataframe = Datapreparation.OHLCV_DataFrame(dataset)
                             print('Fitting the model to the new data')
                             print('This may take a while...')
-                            #MachineLearning.LSTM(dataframe, coin)
+                            MachineLearning.LSTM(dataframe, cassie.local_date, coin)
                             print('Model fitted. Results and plots can be seen on respective folders.')
                     print('Extracting pricing data from the server to forecast the coin: ' + coin['symbol'])
                     dataset = cassie.client.get_klines(symbol=coin['symbol'], interval=cassie.WORK_TIMEFRAME,
                                                        limit=cassie.NO_DATA)
                     dataset_ohlcv = Datapreparation.OHLCV_DataFrame(dataset)
                     print('Making forecasts!. Plots can be seen on respective folders.')
-                    price_forecast = ModelForecast.Predict_LSTM(dataset_ohlcv, coin)
+                    price_forecast = ModelForecast.Predict_LSTM(dataset_ohlcv, cassie.local_date, coin)
                     ds_forecast = numpy.append(dataset_ohlcv['close'], price_forecast['close'], 0)
                     returns = Portfolio.Return(ds_forecast, coin)
                     data_returns[coin['symbol']] = returns[coin['symbol']]
@@ -171,14 +172,14 @@ def main():
     #print(data_returns)
     data_returns = data_returns.iloc[cassie.PORTFOLIO_MEMORY:]
     #print(data_returns)
-    #assets, optimal_sharpe_weights, optimal_variance_weights = Portfolio.Plot(data_returns)
-    assets, optimal_weights = Portfolio.Capital_Market_Line(data_returns)
+    #assets, optimal_weights = Portfolio.Capital_Market_Line(data_returns)
+    assets, optimal_sharpe_weights, optimal_variance_weights, optimal_weights = Portfolio.Plot(data_returns, cassie.local_date)
     #if cassie.OPTIMIZATION_TYPE == 'OPTIMAL_SHARPE':
-    #    Portfolio.Optimum_Accounting(assets, optimal_sharpe_weights, coin['symbol'])
+    #    Portfolio.Optimum_Accounting(assets, optimal_sharpe_weights, cassie.local_date, coin['symbol'])
     #else if cassie.OPTIMIZATION_TYPE == 'MINIMUM_VARIANCE:
-    #    Portfolio.Optimum_Accounting(assets, optimal_variance_weights, coin['symbol'])
-    #else:
-    #       Portfolio.Optimum_Accounting(assets, optimal_weights, coin['symbol'])
+    #    Portfolio.Optimum_Accounting(assets, optimal_variance_weights, cassie.local_date, coin['symbol'])
+    #else if cassie.OPTIMIZATION_TYPE == 'CAPITAL_MARKET_LINE::
+    #    Portfolio.Optimum_Accounting(assets, optimal_weights, cassie.local_date, coin['symbol'])
 
 while True:
     try:

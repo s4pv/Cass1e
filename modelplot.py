@@ -74,7 +74,7 @@ class ModelPlot:
             return False
         return forecastPlot, closePlot
 
-    def Plot_Actual(ds, trainYPlot, testYPlot, trainPredictPlot, testPredictPlot, coin, modelname):
+    def Plot_Actual(ds, trainYPlot, testYPlot, trainPredictPlot, testPredictPlot, coin, modelname, date):
         try:
             # plot baseline and predictions
             plt.figure(figsize=(10, 6))
@@ -89,8 +89,9 @@ class ModelPlot:
             plt.legend(loc='lower right')
             plt.grid(color='k', linestyle='dotted', linewidth=1)
             #plt.show()
-            filename = os.path.join('C:/Users/pablo/PycharmProjects/Cass1e/model_plots',
-                                    str(coin['symbol']) + '_model_' + str(modelname) + '.png')
+            filedir = 'model_plots/' + str(date) + '/'
+            filename = os.path.join(filedir, str(coin['symbol']) + '_model_' + str(modelname) + '.png')
+            os.makedirs(filedir, exist_ok=True)
             plt.savefig(filename)
             plt.close()
         except Exception as e:
@@ -98,7 +99,7 @@ class ModelPlot:
             return False
         return True
 
-    def Plot_Forecast(cPlot, forecastPlot, coin, modelname):
+    def Plot_Forecast(cPlot, forecastPlot, coin, modelname, date):
         try:
             # plot baseline and predictions
             plt.figure(figsize=(10, 6))
@@ -110,8 +111,9 @@ class ModelPlot:
             plt.legend(loc='lower right')
             plt.grid(color='k', linestyle='dotted', linewidth=1)
             #plt.show()
-            filename = os.path.join('C:/Users/pablo/PycharmProjects/Cass1e/model_forecasts_plots',
-                                    str(coin['symbol']) + '_forecast_model_' + str(modelname) + '.png')
+            filedir = 'model_forecasts_plots/' + str(date) + '/'
+            filename = os.path.join(filedir, str(coin['symbol']) + '_forecast_model_' + str(modelname) + '.png')
+            os.makedirs(filedir, exist_ok=True)
             plt.savefig(filename)
             plt.close()
         except Exception as e:

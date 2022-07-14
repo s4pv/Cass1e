@@ -179,100 +179,100 @@ class Datapreparation:
             return False
         return data
 
-    def Minmax_Scaler(dataset, model, coin):
+    def Minmax_Scaler(dataset, model, coin, date):
         try:
             #print('Starting to scale the set with Min Max Scaler')
             scaler = preprocessing.MinMaxScaler(feature_range=(0, 1))
             ds = scaler.fit_transform(dataset)
-            ScalerParameters.Save(coin, scaler, 'MINMAXSCALER', model)
+            ScalerParameters.Save(coin, scaler, 'MINMAXSCALER', model, date)
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
         return ds
 
-    def Standard_Scaler(dataset, model, coin):
+    def Standard_Scaler(dataset, model, coin, date):
         try:
             #print('Starting to scale the set with Standard Scaler')
             scaler = preprocessing.StandardScaler()
             ds = scaler.fit_transform(dataset)
-            ScalerParameters.Save(coin, scaler, 'STANDARDSCALER', model)
+            ScalerParameters.Save(coin, scaler, 'STANDARDSCALER', model, date)
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
         return ds
 
-    def Maxabs_Scaler(dataset, model, coin):
+    def Maxabs_Scaler(dataset, model, coin, date):
         try:
             #print('Starting to scale the set with Maxabs Scaler')
             scaler = preprocessing.MaxAbsScaler()
             ds = scaler.fit_transform(dataset)
-            ScalerParameters.Save(coin, scaler, 'MAXABSSCALER', model)
+            ScalerParameters.Save(coin, scaler, 'MAXABSSCALER', model, date)
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
         return ds
 
-    def Robust_Scaler(dataset, model, coin):
+    def Robust_Scaler(dataset, model, coin, date):
         try:
             #print('Starting to scale the set with Robust Scaler')
             scaler = preprocessing.RobustScaler(quantile_range=(25, 75))
             ds = scaler.fit_transform(dataset)
-            ScalerParameters.Save(coin, scaler, 'ROBUSTSCALER', model)
+            ScalerParameters.Save(coin, scaler, 'ROBUSTSCALER', model, date)
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
         return ds
 
-    def Yeo_Johnson_Scaler(dataset, model, coin):
+    def Yeo_Johnson_Scaler(dataset, model, coin, date):
         try:
             #print('Starting to scale the set with Yeo-Johnson Power Scaler')
             scaler = preprocessing.PowerTransformer(method="yeo-johnson")
             ds = scaler.fit_transform(dataset)
-            ScalerParameters.Save(coin, scaler, 'YEOJOHNSONSCALER', model)
+            ScalerParameters.Save(coin, scaler, 'YEOJOHNSONSCALER', model, date)
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
         return ds
 
-    def Box_Cox_Scaler(dataset, model, coin):
+    def Box_Cox_Scaler(dataset, model, coin, date):
         try:
             # print('Starting to scale the set with Box-Cox Power Scaler(data must be entirely positive)')
             scaler = preprocessing.PowerTransformer(method="box-cox")
             ds = scaler.fit_transform(dataset)
-            ScalerParameters.Save(coin, scaler, 'BOXCOXSCALER', model)
+            ScalerParameters.Save(coin, scaler, 'BOXCOXSCALER', model, date)
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
         return ds
 
-    def Uniform_Scaler(dataset, model, coin):
+    def Uniform_Scaler(dataset, model, coin, date):
         try:
             # print('Starting to scale the set with Uniform Quantile Scaler')
             scaler = preprocessing.QuantileTransformer(output_distribution="uniform")
             ds = scaler.fit_transform(dataset)
-            ScalerParameters.Save(coin, scaler, 'UNIFORMSCALER', model)
+            ScalerParameters.Save(coin, scaler, 'UNIFORMSCALER', model, date)
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
         return ds
 
-    def Gaussian_Scaler(dataset, model, coin):
+    def Gaussian_Scaler(dataset, model, coin, date):
         try:
             # print('Starting to scale the set with Gaussian Quantile Scaler')
             scaler = preprocessing.QuantileTransformer(output_distribution="normal")
             ds = scaler.fit_transform(dataset)
-            ScalerParameters.Save(coin, scaler, 'GaussianSCALER', model)
+            ScalerParameters.Save(coin, scaler, 'GAUSSIANSCALER', model, date)
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
         return ds
 
-    def Normal_Scaler(dataset, model, coin):
+    def Normal_Scaler(dataset, model, coin, date):
         try:
            # print('Starting to scale the set with Normal Scaler')
            scaler = preprocessing.Normalizer()
            ds = scaler.fit_transform(dataset)
-           ScalerParameters.Save(coin, scaler, 'NORMALSCALER', model)
+           ScalerParameters.Save(coin, scaler, 'NORMALSCALER', model, date)
         except Exception as e:
            print("An exception occurred - {}".format(e))
            return False

@@ -1,0 +1,3 @@
+Shapiro Wilk normality test
+stat=0.994,p=0.001
+Probably not Gaussian

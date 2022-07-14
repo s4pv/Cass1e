@@ -1,0 +1,7 @@
+Capital Market Line Results:
+('Optimal Portfolio Return: ', 0.5587)
+('Optimal Portfolio Volatility: ', 8.0439)
+('Optimal Portfolio Sharpe Ratio: ', 0.0695)
+('Optimal Portfolio VAR: ', -1.0194)
+('Optimal Portfolio n days VAR: ', -10.19)
+[('BTCUSDT', 0.0), ('ETHUSDT', 0.0), ('ADAUSDT', 0.0), ('LINKUSDT', 0.0), ('THETAUSDT', 0.0), ('MATICUSDT', 0.0), ('ATOMUSDT', 0.0), ('FTMUSDT', 0.0), ('ALGOUSDT', 0.0), ('FTTUSDT', 0.0), ('SOLUSDT', 0.0), ('SRMUSDT', 0.0), ('DOTUSDT', 0.0), ('AVAXUSDT', 0.0), ('AXSUSDT', 1.0), ('ARUSDT', 0.0), ('RAYUSDT', 0.0)]

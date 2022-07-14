@@ -1,0 +1,7 @@
+Optimal Sharpe Results:
+('Optimal Portfolio Return: ', 0.3016)
+('Optimal Portfolio Volatility: ', 4.0652)
+('Optimal Portfolio Sharpe Ratio: ', 0.0742)
+('Optimal Portfolio VAR: ', -0.2596)
+('Optimal Portfolio n days VAR: ', -2.6)
+[('BTCUSDT', 0.0), ('ETHUSDT', 0.0), ('ADAUSDT', 0.0), ('LINKUSDT', 0.0), ('THETAUSDT', 0.0), ('MATICUSDT', 0.0), ('ATOMUSDT', 0.0), ('FTMUSDT', 0.0), ('ALGOUSDT', 0.0), ('FTTUSDT', 0.0), ('SOLUSDT', 0.0), ('SRMUSDT', 0.5729), ('DOTUSDT', 0.0), ('AVAXUSDT', 0.0), ('AXSUSDT', 0.4271), ('ARUSDT', 0.0), ('RAYUSDT', 0.0)]

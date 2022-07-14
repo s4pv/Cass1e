@@ -18,3 +18,4 @@ if required/wanted.
 # Further steps
 1. With the forecast, the bot optimize portfolios and trades over them.
 2. Telegram Interface/reporting
+

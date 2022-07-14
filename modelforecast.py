@@ -8,6 +8,7 @@ from modelparameters import ModelParameters
 from stats import Stats
 import pandas as pd
 import numpy as np
+import os
 
 warnings.filterwarnings("ignore")
 
@@ -27,14 +28,15 @@ ML_MODEL = parsed_config['model_options']['ML_MODEL']
 WEIGHT = parsed_config['model_options']['WEIGHT']
 
 class ModelForecast:
-    def Predict_LSTM(dataset, coin):
+    def Predict_LSTM(dataset, date, coin):
         try:
             # statistical tests
             print('Transforming the data to returns to make the data stationary')
             #return_dataset = Datapreparation.Returns_Transformation(dataset)
             return_dataset = Datapreparation.Fractional_Differentiation(dataset, WEIGHT)
-            print('Testing if the data is stationary on close data')
-            statsDF, pDF = Stats.Dickey_Fuller(return_dataset['close'])
+            a = 'Testing if the data is stationary on close data'
+            print(a)
+            statsDF, pDF = Stats.Dickey_Fuller(return_dataset['close'], coin, 'forecast', date)
             # preprocessing data
             r_c_unscaled, r_ohlv_unscaled, r_ohlcv_unscaled = Datapreparation.Prepare_Data(return_dataset)
             # scaling data without saving it
@@ -48,12 +50,15 @@ class ModelForecast:
             # reshaping data
             r_ohlcv_scaled_2 = pd.DataFrame(r_ohlcv_scaled)
             r_ohlcv_scaled_2.columns = ['volume', 'open', 'high', 'low', 'close']
-            # plot histogram, probplot and qqplot
-            #print('Starting to plot histogram, PPplot and QQplot on close data')
-            #Stats.Plots(r_ohlcv_scaled_2['close'])
+            r_c_scaled = pd.DataFrame(r_c_scaled)
+            r_c_scaled.columns = ['close']
+            # plot histogram probplot and qplot
+            print('Starting to plot histogram, PPplot and QQplot on close data')
+            Stats.Plots(r_c_scaled['close'], coin, 'forecast', date)
             # testing for normality
-            print('Testing for normality on close data sets.')
-            statsSW, pSW = Stats.Shapiro_Wilk(r_ohlcv_scaled_2['close'])
+            b = 'Testing for normality on close data sets.'
+            print(b)
+            statsSWC, pSWC = Stats.Shapiro_Wilk(r_ohlcv_scaled_2['close'], coin, 'forecast', date)
             # Split sequences
             r_ohlv_scaled_2, r_c_scaled_2 = Datapreparation.Split_Sequences(r_ohlcv_scaled, N_STEPS_IN, N_STEPS_OUT)
             # load previously fitted model
@@ -84,7 +89,7 @@ class ModelForecast:
             # shift train predictions for plotting
             forecastPlot, cPlot = ModelPlot.Shift_Forecast_Plot(p_c_unscaled_2, p_forecast_unscaled)
             # plot baseline and predictions
-            ModelPlot.Plot_Forecast(cPlot, forecastPlot, coin, ML_MODEL)
+            ModelPlot.Plot_Forecast(cPlot, forecastPlot, coin, ML_MODEL, date)
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
