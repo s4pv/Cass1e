@@ -17,3 +17,4 @@ statsmodels
 numpy
 cvxpy
 outlier_utils
+mlautomator

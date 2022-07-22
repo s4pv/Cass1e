@@ -35,7 +35,7 @@ class Portfolio:
             return False
         return balance['free'], usdt_balance
 
-    def Optimum_Accounting(assets, assets_weights, crypto):
+    def Rebalancing_Class(assets, assets_weights, crypto):
         try:
             pass
             #for x in len(assets):
@@ -80,14 +80,14 @@ class Portfolio:
             for i in range(iterations):
                 weights = np.random.dirichlet(np.ones(num_assets), size=1)
                 weights = weights[0]
-                port_returns.append(np.sum(data_returns.mean() * weights))
-                port_vols.append(np.sqrt(np.dot(weights.T, np.dot(data_returns.cov(), weights))))
+                port_returns.append(np.sum(data_returns.mean() * weights) * 252)
+                port_vols.append(np.sqrt(np.dot(weights.T, np.dot(data_returns.cov() * 252, weights))))
             # Convert lists to arrays
             port_returns = np.array(port_returns)
             port_vols = np.array(port_vols)
             # Plot the distribution of portfolio returns and volatilities
             plt.figure(figsize=(18, 10))
-            plt.scatter(port_vols, port_returns, c=(port_returns / port_vols), marker='o')
+            plt.scatter(port_vols, port_returns, c=((port_returns - 0.01) / port_vols), marker='o')
             plt.xlabel('Portfolio Volatility')
             plt.ylabel('Portfolio Return')
             plt.colorbar(label='Sharpe ratio (not adjusted for short rate)')
@@ -111,15 +111,15 @@ class Portfolio:
             weights = np.array(weights)
             # stats for portfolio (daily or selected period)
             # returns
-            port_return = np.sum(df.mean() * weights)
+            port_return = np.sum(df.mean() * weights) * 252
             # volatility or standard deviation
-            port_vol = np.sqrt(np.dot(weights.T, np.dot(df.cov(), weights)))
+            port_vol = np.sqrt(np.dot(weights.T, np.dot(df.cov() * 252, weights)))
             # Use z value, mean and standard deviation to calculation
             # Assume return is normal distribution (this is false with price data according to stat tests)
             Z_value = stats.norm.ppf(abs(1 - VAR_CONFIDENCE), port_return, port_vol)
             VAR = Z_value * port_vol
             VAR_n_days = np.round(VAR * np.sqrt(N_STEPS_OUT),4)
-            sharpe = port_return / port_vol
+            sharpe = (port_return - 0.01) / port_vol
         except Exception as e:
             print("An exception ocurred - {}".format(e))
             return False
@@ -266,31 +266,33 @@ class Portfolio:
         try:
             port_returns, port_vols = Portfolio.Simulations(data_returns, date)
             minimal_volatilities, target_returns = Portfolio.Efficient_Frontier(data_returns, port_returns)
-            #print(minimal_volatilities)
-            #print(target_returns)
             sharpe_results = Portfolio.Optimize_Sharpe(data_returns, date)
             assets1, optimal_sharpe_weights = list(zip(*sharpe_results))
             var_results = Portfolio.Optimize_Return(data_returns, date)
             assets2, optimal_variance_weights = list(zip(*var_results))
             optimal = Portfolio.Capital_Market_Line(data_returns, minimal_volatilities, target_returns, port_vols, port_returns)
-            capm_results = Portfolio.Optimize_CAL(data_returns, minimal_volatilities, target_returns, optimal, date)
-            assets3, optimal_weights = list(zip(*capm_results))
+            cml_results = Portfolio.Optimize_CML(data_returns, minimal_volatilities, target_returns, optimal, date)
+            assets3, optimal_weights = list(zip(*cml_results))
 
-            x = np.linspace(0, max(port_vols), 3000)
-            y = optimal[1] * x + optimal[0]
+            cx = np.linspace(0.0, 1.6)
 
             # initialize figure size
             plt.figure(figsize=(18, 10))
 
             plt.scatter(port_vols,
                         port_returns,
-                        c=(port_returns / port_vols),
+                        c=((port_returns - 0.01) / port_vols),
                         marker='o')
 
             plt.scatter(minimal_volatilities,
                         target_returns,
-                        c=(target_returns / minimal_volatilities),
+                        c=((target_returns - 0.01) / minimal_volatilities),
                         marker='x')
+
+            cy = cx * ((Portfolio.port_stats(optimal_weights, data_returns)['return'] - optimal[0] ) /
+                 Portfolio.port_stats(optimal_weights, data_returns)['volatility']) + optimal[0]
+
+            plt.plot(cx, cy, linewidth=2, color='blue', label='Capital Market Line')
 
             plt.plot(Portfolio.port_stats(optimal_sharpe_weights, data_returns)['volatility'],
                      Portfolio.port_stats(optimal_sharpe_weights, data_returns)['return'],
@@ -299,10 +301,13 @@ class Portfolio:
 
             plt.plot(Portfolio.port_stats(optimal_variance_weights, data_returns)['volatility'],
                      Portfolio.port_stats(optimal_variance_weights, data_returns)['return'],
-                     'y*',
+                     'g*',
                      markersize=25.0)
 
-            plt.plot(x, y, '-', linewidth=2, color='blue', label='Capital Market Line')
+            plt.plot(Portfolio.port_stats(optimal_weights, data_returns)['volatility'],
+                     Portfolio.port_stats(optimal_weights, data_returns)['return'],
+                     'b*',
+                     markersize=25.0)
 
             plt.xlabel('Portfolio Volatility')
             plt.ylabel('Portfolio Return')
@@ -325,7 +330,7 @@ class Portfolio:
             ex_returns = target_returns[min_index:]
             ex_volatilities = minimal_volatilities[min_index:]
             var = sci.splrep(ex_returns, ex_volatilities)
-            rfr = 0.0001
+            rfr = 0.01
             m = port_vols.max() / 2
             li = port_returns.max() / 2
 
@@ -347,7 +352,7 @@ class Portfolio:
                     return False
                 return deriv
 
-            def eqs(p, rfr=0.0001):
+            def eqs(p, rfr=0.01):
                 try:
                     # rfr = risk free rate
                     eq1 = rfr - p[0]
@@ -359,13 +364,12 @@ class Portfolio:
                 return eq1, eq2, eq3
 
             optimal = optimize.fsolve(eqs, [rfr, m, li])
-            #print(optimal)
         except Exception as e:
             print("An exception ocurred - {}".format(e))
             return False
         return optimal
 
-    def Optimize_CAL(data_returns, minimal_volatilities, target_returns, optimal, date):
+    def Optimize_CML(data_returns, minimal_volatilities, target_returns, optimal, date):
         try:
             min_index = np.argmin(minimal_volatilities)
             ex_returns = target_returns[min_index:]

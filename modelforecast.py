@@ -28,7 +28,7 @@ ML_MODEL = parsed_config['model_options']['ML_MODEL']
 WEIGHT = parsed_config['model_options']['WEIGHT']
 
 class ModelForecast:
-    def Predict_LSTM(dataset, date, coin):
+    def Predict(dataset, date, coin):
         try:
             # statistical tests
             print('Transforming the data to returns to make the data stationary')
@@ -62,13 +62,13 @@ class ModelForecast:
             # Split sequences
             r_ohlv_scaled_2, r_c_scaled_2 = Datapreparation.Split_Sequences(r_ohlcv_scaled, N_STEPS_IN, N_STEPS_OUT)
             # load previously fitted model
-            lstm = ModelParameters.Load_Model(ML_MODEL, 'BTCUSDT')
+            model = ModelParameters.Load_Model(ML_MODEL, 'BTCUSDT')
             # compile loaded model on test data
-            lstm.compile(loss='mean_squared_error', optimizer='adam')
+            model.compile(loss='mean_squared_error', optimizer='adam')
             # evaluate loaded model
-            lstm.evaluate( r_ohlv_scaled_2, r_c_scaled_2, batch_size=N_STEPS_IN, verbose=VERBOSE)
+            model.evaluate( r_ohlv_scaled_2, r_c_scaled_2, batch_size=N_STEPS_IN, verbose=VERBOSE)
             # make predictions
-            r_forecast_scaled = lstm.predict(r_ohlv_scaled_2, batch_size=N_STEPS_IN)
+            r_forecast_scaled = model.predict(r_ohlv_scaled_2, batch_size=N_STEPS_IN)
             # reshape sets
             r_forecast_scaled = r_forecast_scaled[len(r_forecast_scaled)-1].reshape(N_STEPS_OUT, -1)
             #print(r_forecast_scaled.shape)

@@ -94,15 +94,16 @@ def main():
                             dataframe = Datapreparation.OHLCV_DataFrame(dataset)
                             print('Fitting the model to the new data')
                             print('This may take a while...')
-                            MachineLearning.LSTM(dataframe, cassie.local_date, coin)
+                            MachineLearning.Model(dataframe, cassie.local_date, coin)
                             print('Model fitted. Results and plots can be seen on respective folders.')
                     print('Extracting pricing data from the server to forecast the coin: ' + coin['symbol'])
                     dataset = cassie.client.get_klines(symbol=coin['symbol'], interval=cassie.WORK_TIMEFRAME,
                                                        limit=cassie.NO_DATA)
-                    dataset_ohlcv = Datapreparation.OHLCV_DataFrame(dataset)
+                    dataframe = Datapreparation.OHLCV_DataFrame(dataset)
+                    #MachineLearning.Model(dataframe, cassie.local_date, coin)
                     print('Making forecasts!. Plots can be seen on respective folders.')
-                    price_forecast = ModelForecast.Predict_LSTM(dataset_ohlcv, cassie.local_date, coin)
-                    ds_forecast = numpy.append(dataset_ohlcv['close'], price_forecast['close'], 0)
+                    price_forecast = ModelForecast.Predict(dataframe, cassie.local_date, coin)
+                    ds_forecast = numpy.append(dataframe['close'], price_forecast['close'], 0)
                     returns = Portfolio.Return(ds_forecast, coin)
                     data_returns[coin['symbol']] = returns[coin['symbol']]
                     #print(data_returns[coin['symbol']])
@@ -170,7 +171,7 @@ def main():
     #portfolio weights and plots calculation after all tickers forecasts made
     # degree of memory (0: full memory about past data, 1001: only memory about forecasts)
     #print(data_returns)
-    data_returns = data_returns.iloc[cassie.PORTFOLIO_MEMORY:]
+    #data_returns = data_returns.iloc[cassie.PORTFOLIO_MEMORY:]
     #print(data_returns)
     #assets, optimal_weights = Portfolio.Capital_Market_Line(data_returns)
     assets, optimal_sharpe_weights, optimal_variance_weights, optimal_weights = Portfolio.Plot(data_returns, cassie.local_date)

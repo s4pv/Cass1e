@@ -1,19 +1,19 @@
 # Data extraction parameters for modeling (max = 1000)
 model_options:
   NO_DATA: 1000
-  ML_MODEL: 'LSTM'
+  ML_MODEL: 'MLAutomator' #other options: ''LSTM', 'MLAutomator'
   # Fractional Differentiation weight. 0 for no differentiation at all and 1 for whole integer differentiation
   WEIGHT: 0.9625
 
 # Date of the model to load for forecasting
 model_parameters_options:
-  MODEL_DATE: '2022714'
+  MODEL_DATE: '2022715'
 
 # Date of the scaler model to invert model and plot
 scaler_parameters_options:
-  SCALER_DATE: '2022714'
+  SCALER_DATE: '2022715'
 
-# Portfolio Options (degree of memory (0: full memory about past data, 1001: only memory about forecasts))
+# Portfolio Options (degree of memory (0: full memory about past data, 1000: only memory about forecasts))
 portfolio_options:
   PORTFOLIO_MEMORY: 1000
   #optimization type: could be OPTIMAL_SHARPE, MINIMUM_VARIANCE or CAPITAL_MARKET_LINE (CAPM):
@@ -30,6 +30,13 @@ ml_options:
   EPOCH: 250
   N_FEATURES: 4
   VERBOSE: 2
+  # '01' : XGBRegressor
+  # '02' : SGDRegressor
+  # '03' : RandomForestRegressor
+  # '04' : SVR -> only single variable input and output
+  # '05' : KNeighborRegressor
+  ALGO_LIST: ['01', '02', '03', '05']
+
 
 # These options apply to the trading methods the script executes
 trading_options:

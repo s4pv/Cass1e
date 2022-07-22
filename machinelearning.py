@@ -9,6 +9,7 @@ import warnings
 from sklearn.metrics import mean_squared_error
 import numpy
 import os
+from mlautomator.mlautomator import MLAutomator
 
 from helper import Helper
 from datapreparation import Datapreparation
@@ -30,12 +31,13 @@ N_STEPS_OUT = parsed_config['ml_options']['N_STEPS_OUT']
 EPOCH = parsed_config['ml_options']['EPOCH']
 N_FEATURES = parsed_config['ml_options']['N_FEATURES']
 VERBOSE = parsed_config['ml_options']['VERBOSE']
+ALGO_LIST = parsed_config['ml_options']['ALGO_LIST']
 
 ML_MODEL = parsed_config['model_options']['ML_MODEL']
 WEIGHT = parsed_config['model_options']['WEIGHT']
 
 class MachineLearning:
-    def LSTM(dataset, date, coin):
+    def Model(dataset, date, coin):
         try:
             print('Transforming the data to returns to make the data stationary')
             #return_dataset = Datapreparation.Returns_Transformation(dataset)
@@ -70,43 +72,63 @@ class MachineLearning:
             statsSWC, pSWC = Stats.Shapiro_Wilk(r_c_scaled['close'], coin, 'model', date)
             # Split sequences
             train, test = Datapreparation.Dataset_Split(r_ohlcv_scaled)
-            # train and test split
+            # train and test split LSTM
             trainX, trainY = Datapreparation.Split_Sequences(train, N_STEPS_IN, N_STEPS_OUT)
             testX, testY = Datapreparation.Split_Sequences(test, N_STEPS_IN, N_STEPS_OUT)
-            #print(trainX.shape, trainY.shape)
-            #print(testX.shape, testY.shape)
+            # train and test split for ML-Automator
+            #trainX, trainY = Datapreparation.Split_Sequences(train, N_STEPS_IN, 1)
+            #testX, testY = Datapreparation.Split_Sequences(test, N_STEPS_IN, 1)
+            #trainX = numpy.reshape(trainX, (-1, N_FEATURES))
+            #testX = numpy.reshape(testX, (-1, N_FEATURES))
+            #trainY = trainY[len(trainY)-1].reshape(N_STEPS_OUT, -1)
+            #testY = testY[len(testY)-1].reshape(N_STEPS_OUT, -1)
             # fix random seed for reproducibility
             numpy.random.seed(7)
             # Create and fit the Long short Term Memory network.
-            lstm = Sequential()
+            model = Sequential()
             # so neurons are steps in * n features
             #n_neurons = trainX.shape[1] * trainX.shape[2]
             #print('Recommended neurons are')
             #print(n_neurons)
-            # Not stacked multi variable LSTM not-bidirectional multi step output
-            lstm.add(LSTM(NEURONS, input_shape=(N_STEPS_IN, N_FEATURES), return_sequences=True))
+            # Multi variable LSTM multi step output
+            model.add(LSTM(NEURONS, input_shape=(N_STEPS_IN, N_FEATURES), return_sequences=True))
             # Stacked multi variable LSTM bidirectional multi step output
-            #lstm.add(Bidirectional(LSTM(NEURONS, batch_input_shape=(N_STEPS_IN, N_STEPS_OUT, N_FEATURES), stateful=True, return_sequences=True)))
-            #lstm.add(Bidirectional(LSTM(NEURONS, batch_input_shape=(N_STEPS_IN, N_STEPS_OUT, N_FEATURES), stateful=True)))
-            lstm.add(Dense(N_STEPS_OUT))
-            lstm.add(Dropout(DROPOUT))
-            lstm.compile(loss='mean_squared_error', optimizer='adam')
+            #model.add(Bidirectional(LSTM(NEURONS, batch_input_shape=(N_STEPS_IN, N_STEPS_OUT, N_FEATURES), stateful=True, return_sequences=True)))
+            #model.add(Bidirectional(LSTM(NEURONS, batch_input_shape=(N_STEPS_IN, N_STEPS_OUT, N_FEATURES), stateful=True)))
+
+            #model = MLAutomator(trainX, trainY, iterations=30, algo_type='regressor', score_metric='neg_mean_squared_error',
+            #                        specific_algos=ALGO_LIST)
+            #model.find_best_algorithm()
+            #model.fit_best_pipeline()
+            #model.print_best_space()
+            #filedir = 'model_parameters/' + str(date) + '/'
+            #os.makedirs(filedir, exist_ok=True)
+            #model.save_best_pipeline(filedir)
+
+            model.add(Dense(N_STEPS_OUT))
+            model.add(Dropout(DROPOUT))
+            model.compile(loss='mean_squared_error', optimizer='adam')
             # no memory between batches
-            lstm.fit(trainX, trainY, epochs=EPOCH, batch_size=N_STEPS_IN, verbose=VERBOSE)
-            lstm.reset_states()
+            model.fit(trainX, trainY, epochs=EPOCH, batch_size=N_STEPS_IN, verbose=VERBOSE)
+            model.reset_states()
             # memory between batches
             #for i in range(EPOCH):
-            #    lstm.fit(trainX, trainY, epochs=1, batch_size=N_STEPS_IN, verbose=VERBOSE, shuffle=False)
-            #    lstm.reset_states()
-            print(lstm.summary())
-            # make predictions
-            trainPredict = lstm.predict(trainX, batch_size=N_STEPS_IN)
-            lstm.reset_states()
+            #    model.fit(trainX, trainY, epochs=1, batch_size=N_STEPS_IN, verbose=VERBOSE, shuffle=False)
+            #    model.reset_states()
+            #print summary
+            print(model.summary())
+            # make predictions LSTM
+            trainPredict = model.predict(trainX, batch_size=N_STEPS_IN)
+            model.reset_states()
             #print(trainPredict.shape)
-            testPredict = lstm.predict(testX, batch_size=N_STEPS_IN)
+            testPredict = model.predict(testX, batch_size=N_STEPS_IN)
+            model.reset_states()
             #print(testPredict.shape)
+            # make preditions ML-Automator
+            #trainPredict = model.predict(trainX)
+            #testPredict = model.predict(testX)
             # evaluate loaded model
-            lstm.evaluate(trainX, trainY, batch_size=N_STEPS_IN, verbose=VERBOSE)
+            #model.evaluate(trainX, trainY, batch_size=N_STEPS_IN, verbose=VERBOSE)
             # reshape sets
             trainPredict = trainPredict[len(trainPredict)-1].reshape(N_STEPS_OUT, -1)
             testPredict = testPredict[len(testPredict)-1].reshape(N_STEPS_OUT, -1)
@@ -216,7 +238,7 @@ class MachineLearning:
             closePlot1 = numpy.reshape(closePlot1, (1, len(closePlot1)))
             ModelPlot.Plot_Actual(closePlot1[0], trainYPlot, testYPlot, trainPredictPlot, testPredictPlot, coin, ML_MODEL, date)
             # Saving model to disk
-            ModelParameters.Save_Model(lstm, coin, ML_MODEL, date)
+            ModelParameters.Save_Model(model, coin, ML_MODEL, date)
         except Exception as e:
             print("An exception occurred - {}".format(e))
             return False
